@@ -46,7 +46,7 @@ public class Business {
     @Column(name = "total_reviews")
     private Integer totalReviews = 0;
 
-    @Column(name = "qr_code_url")
+    @Column(name = "qr_code_url", columnDefinition = "LONGTEXT")
     private String qrCodeUrl;
 
     @Column(name = "called_message")

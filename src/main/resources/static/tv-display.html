@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartQ — Display</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #1e293b;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #3b82f6;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+
+        .business-name {
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .time {
+            font-size: 1.2rem;
+            color: #64748b;
+        }
+
+        .main {
+            flex: 1;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit,
+                minmax(300px, 1fr));
+            gap: 30px;
+            align-content: start;
+        }
+
+        .counter-card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 30px;
+            border: 2px solid #334155;
+            text-align: center;
+        }
+
+        .counter-card.active {
+            border-color: #3b82f6;
+        }
+
+        .counter-name {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .now-serving {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .token-number {
+            font-size: 6rem;
+            font-weight: bold;
+            color: #3b82f6;
+            line-height: 1;
+            margin: 10px 0;
+        }
+
+        .waiting-count {
+            font-size: 1rem;
+            color: #64748b;
+            margin-top: 10px;
+        }
+
+        .waiting-count span {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        .status-closed {
+            color: #ef4444;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .footer {
+            background: #1e293b;
+            padding: 15px 40px;
+            text-align: center;
+            color: #475569;
+            font-size: 0.9rem;
+            border-top: 1px solid #334155;
+        }
+
+        .queue-status {
+            text-align: center;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .queue-open {
+            background: #064e3b;
+            color: #34d399;
+        }
+
+        .queue-closed {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">SmartQ</div>
+    <div class="business-name" id="businessName">Loading...</div>
+    <div class="time" id="currentTime"></div>
+</div>
+
+<div class="main" id="countersGrid">
+    <p style="color:#64748b">Loading queue data...</p>
+</div>
+
+<div class="footer">
+    SmartQ — Queue smarter, wait less &nbsp;|&nbsp;
+    Scan QR code at entrance to join the queue
+</div>
+
+<script>
+    // Get business ID from URL
+    // Usage: tv-display.html?businessId=1
+    const params = new URLSearchParams(window.location.search);
+    const businessId = params.get('businessId') || 1;
+
+    // Update clock every second
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent =
+            now.toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Fetch and display queue data
+    async function loadDisplay() {
+        try {
+            const response = await fetch(
+                `/api/display/${businessId}`);
+            const data = await response.json();
+
+            document.getElementById('businessName')
+                .textContent = data.businessName;
+
+            const grid = document.getElementById('countersGrid');
+            grid.innerHTML = '';
+
+            // Queue status badge
+            const statusDiv = document.createElement('div');
+            statusDiv.style.gridColumn = '1/-1';
+            statusDiv.style.textAlign = 'center';
+            statusDiv.style.marginBottom = '10px';
+            statusDiv.innerHTML = `
+                <span class="queue-status ${data.isQueueOpen
+                    ? 'queue-open' : 'queue-closed'}">
+                    ${data.isQueueOpen
+                        ? '🟢 Queue is Open'
+                        : '🔴 Queue is Closed'}
+                </span>`;
+            grid.appendChild(statusDiv);
+
+            // Counter cards
+            data.counters.forEach(counter => {
+                const card = document.createElement('div');
+                card.className = `counter-card ${
+                    counter.isActive ? 'active' : ''}`;
+
+                card.innerHTML = `
+                    <div class="counter-name">
+                        ${counter.counterName}
+                    </div>
+                    <div class="now-serving">NOW SERVING</div>
+                    <div class="token-number">
+                        ${counter.currentToken || '--'}
+                    </div>
+                    <div class="waiting-count">
+                        Waiting: <span>${counter.totalWaiting}
+                        </span> customers
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+        } catch (error) {
+            console.error('Error loading display:', error);
+        }
+    }
+
+    // Load immediately then refresh every 5 seconds
+    loadDisplay();
+    setInterval(loadDisplay, 5000);
+</script>
+
+</body>
+</html>

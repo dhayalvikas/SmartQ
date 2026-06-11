@@ -31,9 +31,14 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Static files — no login needed
+                        .requestMatchers("/**.html").permitAll()
+                        .requestMatchers("/**.css").permitAll()
+                        .requestMatchers("/**.js").permitAll()
                         // Public endpoints — no login needed
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/display/**").permitAll()
+                        .requestMatchers("/join/**").permitAll()
                         // Everything else needs login
                         .anyRequest().authenticated()
                 )

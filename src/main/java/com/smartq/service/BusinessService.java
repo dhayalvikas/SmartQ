@@ -24,6 +24,7 @@ public class BusinessService {
     private final BusinessRepository businessRepository;
     private final UserRepository userRepository;
     private final QueueSessionRepository queueSessionRepository;
+    private final QrCodeService qrCodeService;
 
     // Get current logged in user
     private User getCurrentUser() {
@@ -60,6 +61,13 @@ public class BusinessService {
                         : "Your turn has arrived. Please proceed.")
                 .build();
 
+        businessRepository.save(business);
+        // Generate QR code for this business
+        String qrContent = "http://localhost:8080/join/"
+                + business.getId();
+        String qrBase64 = qrCodeService
+                .generateQrCodeBase64(qrContent);
+        business.setQrCodeUrl(qrBase64);
         businessRepository.save(business);
         return mapToResponse(business);
     }

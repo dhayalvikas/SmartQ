@@ -8,6 +8,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.smartq.entity.Business;
+import com.smartq.repository.BusinessRepository;
+import com.smartq.service.QrCodeService;
+import org.springframework.http.ResponseEntity;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.List;
 
@@ -17,6 +23,8 @@ import java.util.List;
 public class BusinessController {
 
     private final BusinessService businessService;
+    private final BusinessRepository businessRepository;
+    private final QrCodeService qrCodeService;
 
     @PostMapping("/create")
     public ResponseEntity<BusinessResponse> createBusiness(
@@ -43,5 +51,43 @@ public class BusinessController {
             @PathVariable Long businessId) {
         return ResponseEntity.ok(
                 businessService.closeQueue(businessId));
+    }
+    // Get QR code as Base64 (for showing in browser)
+    @GetMapping("/qr/{businessId}")
+    public ResponseEntity<Map<String, String>> getQrCode(
+            @PathVariable Long businessId) {
+        return businessRepository.findById(businessId)
+                .map(business -> {
+                    Map<String, String> response = new HashMap<>();
+                    response.put("qrCode", business.getQrCodeUrl());
+                    response.put("businessName", business.getName());
+                    response.put("scanUrl", "http://localhost:8080/join/"
+                            + businessId);
+                    return ResponseEntity.ok(response);
+                })
+                .orElseThrow(() ->
+                        new RuntimeException("Business not found"));
+    }
+
+    // Download QR code as PNG image
+    @GetMapping("/qr/download/{businessId}")
+    public ResponseEntity<byte[]> downloadQrCode(
+            @PathVariable Long businessId) {
+        Business business = businessRepository
+                .findById(businessId)
+                .orElseThrow(() ->
+                        new RuntimeException("Business not found"));
+
+        String qrContent = "http://localhost:8080/join/"
+                + businessId;
+        byte[] qrBytes = qrCodeService
+                .generateQrCodeBytes(qrContent);
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "image/png")
+                .header("Content-Disposition",
+                        "attachment; filename=smartq-" +
+                                businessId + ".png")
+                .body(qrBytes);
     }
 }
