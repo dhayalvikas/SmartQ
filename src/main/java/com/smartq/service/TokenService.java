@@ -23,6 +23,7 @@ public class TokenService {
     private final CounterRepository counterRepository;
     private final UserRepository userRepository;
     private final QueueSessionRepository queueSessionRepository;
+    private final NotificationService notificationService;
 
     // Get current logged in user
     private User getCurrentUser() {
@@ -159,6 +160,23 @@ public class TokenService {
                         token.getPartySize()
                 );
                 token.setEstimatedWaitMins(newWait);
+                tokenRepository.save(token);
+            }
+
+            // Send notification if customer is 3 tokens away
+            if (token.getPositionInQueue() <= 3
+                    && token.getPositionInQueue() > 0
+                    && !token.getNotificationSent()) {
+
+                notificationService.sendTurnComingEmail(
+                        token.getCustomer().getEmail(),
+                        token.getCustomer().getName(),
+                        business.getName(),
+                        token.getTokenNumber(),
+                        counter.getCounterName()
+                );
+
+                token.setNotificationSent(true);
                 tokenRepository.save(token);
             }
         }
