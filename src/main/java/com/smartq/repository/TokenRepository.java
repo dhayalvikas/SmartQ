@@ -41,4 +41,7 @@ public interface TokenRepository extends JpaRepository<Token, Long> {
             "AND t.status = :status " +
             "AND DATE(t.issuedAt) = CURRENT_DATE")
     int countTodaysTokensByStatus(Long businessId, TokenStatus status);
+
+    @Query("SELECT COUNT(t) FROM Token t WHERE t.status = :status")
+    long countAllByStatus(TokenStatus status);
 }

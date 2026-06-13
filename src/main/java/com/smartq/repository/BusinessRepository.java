@@ -17,4 +17,5 @@ public interface BusinessRepository
     List<Business> findByCity(String city);
     Optional<Business> findByIdAndOwnerId(Long id, Long ownerId);
     boolean existsByNameAndOwnerId(String name, Long ownerId);
+    long countByBusinessType(BusinessType businessType);
 }

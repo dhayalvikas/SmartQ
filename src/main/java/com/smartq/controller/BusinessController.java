@@ -14,6 +14,8 @@ import com.smartq.service.QrCodeService;
 import org.springframework.http.ResponseEntity;
 import java.util.HashMap;
 import java.util.Map;
+import com.smartq.dto.response.AnalyticsResponse;
+import com.smartq.service.AnalyticsService;
 
 import java.util.List;
 
@@ -25,6 +27,7 @@ public class BusinessController {
     private final BusinessService businessService;
     private final BusinessRepository businessRepository;
     private final QrCodeService qrCodeService;
+    private final AnalyticsService analyticsService;
 
     @PostMapping("/create")
     public ResponseEntity<BusinessResponse> createBusiness(
@@ -89,5 +92,14 @@ public class BusinessController {
                         "attachment; filename=smartq-" +
                                 businessId + ".png")
                 .body(qrBytes);
+
+
     }
+    @GetMapping("/analytics/{businessId}")
+    public ResponseEntity<AnalyticsResponse> getAnalytics(
+            @PathVariable Long businessId) {
+        return ResponseEntity.ok(
+                analyticsService.getAnalytics(businessId));
+    }
+
 }
