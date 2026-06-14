@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartQ — Owner Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #1e293b;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #3b82f6;
+        }
+
+        .logo { font-size: 1.8rem; font-weight: bold; color: #3b82f6; }
+
+        .logout-btn {
+            background: #334155;
+            color: #94a3b8;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+
+        .login-card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 380px;
+            border: 1px solid #334155;
+        }
+
+        .login-card h2 { margin-bottom: 20px; color: #3b82f6; }
+
+        .login-card input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .login-card button {
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .login-card button:hover { background: #2563eb; }
+
+        .error-msg {
+            color: #fca5a5;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .main { padding: 30px 40px; display: none; }
+
+        .business-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .business-tab {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+
+        .business-tab.active {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #1e3a5f;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #334155;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+
+        .section h3 {
+            margin-bottom: 16px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .counter-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            background: #0f172a;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #334155;
+        }
+
+        .counter-row.inactive { opacity: 0.5; }
+
+        .counter-info { flex: 1; }
+
+        .counter-name { font-weight: bold; margin-bottom: 4px; }
+
+        .counter-meta { color: #94a3b8; font-size: 0.85rem; }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-success { background: #16a34a; color: white; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-secondary { background: #334155; color: #94a3b8; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .queue-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .badge-open { background: #064e3b; color: #34d399; }
+        .badge-closed { background: #7f1d1d; color: #fca5a5; }
+
+        .feedback-item {
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #334155;
+        }
+
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .stars { color: #f59e0b; }
+
+        .feedback-comment { color: #94a3b8; font-size: 0.9rem; }
+
+        .empty-state {
+            text-align: center;
+            color: #64748b;
+            padding: 30px;
+        }
+
+        .tv-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: #3b82f6;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+
+        .new-counter-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .new-counter-form input,
+        .new-counter-form select {
+            padding: 8px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-card">
+        <h2>SmartQ — Owner Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email" value="owner@test.com">
+        <input type="password" id="loginPassword" placeholder="Password" value="owner123">
+        <button onclick="login()">Login</button>
+        <div class="error-msg" id="loginError"></div>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+    <div class="header">
+        <div class="logo">SmartQ — Owner Dashboard</div>
+        <div>
+            <span id="ownerName" style="margin-right:16px; color:#94a3b8;"></span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="main" id="mainContent">
+        <div class="business-tabs" id="businessTabs"></div>
+        <div id="businessContent"></div>
+    </div>
+</div>
+
+<script>
+    const API = '';
+    let authToken = localStorage.getItem('smartq_owner_token');
+    let businesses = [];
+    let currentBusinessId = null;
+
+    if (authToken) showDashboard();
+
+    async function login() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const res = await fetch(`${API}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (!res.ok) throw new Error('Login failed');
+
+            const data = await res.json();
+
+            if (data.role !== 'OWNER' && data.role !== 'ADMIN') {
+                document.getElementById('loginError').textContent =
+                    'Only business owners can access this dashboard';
+                return;
+            }
+
+            authToken = data.token;
+            localStorage.setItem('smartq_owner_token', authToken);
+            localStorage.setItem('smartq_owner_name', data.name);
+            showDashboard();
+
+        } catch (err) {
+            document.getElementById('loginError').textContent =
+                'Invalid email or password';
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('smartq_owner_token');
+        localStorage.removeItem('smartq_owner_name');
+        location.reload();
+    }
+
+    function authHeaders() {
+        return { 'Authorization': 'Bearer ' + authToken,
+                 'Content-Type': 'application/json' };
+    }
+
+    async function showDashboard() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        document.getElementById('ownerName').textContent =
+            localStorage.getItem('smartq_owner_name') || '';
+
+        await loadBusinesses();
+    }
+
+    async function loadBusinesses() {
+        const res = await fetch(`${API}/api/business/my`, {
+            headers: authHeaders()
+        });
+
+        if (!res.ok) { logout(); return; }
+
+        businesses = await res.json();
+
+        const tabsDiv = document.getElementById('businessTabs');
+        tabsDiv.innerHTML = '';
+
+        if (businesses.length === 0) {
+            document.getElementById('businessContent').innerHTML =
+                '<div class="empty-state">No businesses yet. Create one via API.</div>';
+            return;
+        }
+
+        businesses.forEach(b => {
+            const tab = document.createElement('div');
+            tab.className = 'business-tab' +
+                (b.id === currentBusinessId || (!currentBusinessId && b.id === businesses[0].id)
+                    ? ' active' : '');
+            tab.textContent = `${b.name} (${b.businessType})`;
+            tab.onclick = () => selectBusiness(b.id);
+            tabsDiv.appendChild(tab);
+        });
+
+        if (!currentBusinessId) currentBusinessId = businesses[0].id;
+        loadBusinessDetails(currentBusinessId);
+    }
+
+    function selectBusiness(id) {
+        currentBusinessId = id;
+        document.querySelectorAll('.business-tab').forEach((tab, i) => {
+            tab.classList.toggle('active', businesses[i].id === id);
+        });
+        loadBusinessDetails(id);
+    }
+
+    async function loadBusinessDetails(businessId) {
+        const business = businesses.find(b => b.id === businessId);
+
+        const [countersRes, analyticsRes, feedbackRes] = await Promise.all([
+            fetch(`${API}/api/counter/list/${businessId}`, { headers: authHeaders() }),
+            fetch(`${API}/api/business/analytics/${businessId}`, { headers: authHeaders() }),
+            fetch(`${API}/api/feedback/business/${businessId}`, { headers: authHeaders() })
+        ]);
+
+        const counters = await countersRes.json();
+        const analytics = await analyticsRes.json();
+        const feedback = await feedbackRes.json();
+
+        const content = document.getElementById('businessContent');
+
+        content.innerHTML = `
+            <div class="section">
+                <h3>
+                    ${business.name}
+                    <span class="queue-toggle">
+                        <span class="badge ${business.isQueueOpen ? 'badge-open' : 'badge-closed'}">
+                            ${business.isQueueOpen ? '🟢 Queue Open' : '🔴 Queue Closed'}
+                        </span>
+                        ${business.isQueueOpen
+                            ? `<button class="btn btn-danger" onclick="toggleQueue(${businessId}, false)">Close Queue</button>`
+                            : `<button class="btn btn-success" onclick="toggleQueue(${businessId}, true)">Open Queue</button>`
+                        }
+                    </span>
+                </h3>
+                <div class="counter-meta">
+                    ${business.address}, ${business.city} •
+                    Avg Rating: ${business.avgRating?.toFixed(1) || 'N/A'} ⭐
+                    (${business.totalReviews} reviews)
+                </div>
+                <a class="tv-link" href="/tv-display.html?businessId=${businessId}" target="_blank">
+                    📺 Open TV Display →
+                </a>
+            </div>
+
+            <div class="grid">
+                <div class="stat-card">
+                    <div class="stat-label">Served Today</div>
+                    <div class="stat-value">${analytics.totalServedToday}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Waiting Now</div>
+                    <div class="stat-value">${analytics.totalWaitingNow}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Abandoned Today</div>
+                    <div class="stat-value">${analytics.totalAbandonedToday}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Max Queue Reached</div>
+                    <div class="stat-value">${analytics.maxQueueReachedToday}</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Counters</h3>
+                <div id="countersList">
+                    ${counters.map(c => `
+                        <div class="counter-row ${!c.isActive ? 'inactive' : ''}">
+                            <div class="counter-info">
+                                <div class="counter-name">
+                                    ${c.counterName} — ${c.counterType}
+                                </div>
+                                <div class="counter-meta">
+                                    Now Serving: #${c.currentToken || '--'} •
+                                    Served Today: ${c.tokensServedToday} •
+                                    Staff: ${c.staffName || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-primary"
+                                    onclick="callNext(${c.id})"
+                                    ${!c.isActive || !business.isQueueOpen ? 'disabled' : ''}>
+                                    Call Next
+                                </button>
+                                ${c.isActive
+                                    ? `<button class="btn btn-secondary" onclick="toggleCounter(${c.id}, false)">Deactivate</button>`
+                                    : `<button class="btn btn-success" onclick="toggleCounter(${c.id}, true)">Activate</button>`
+                                }
+                            </div>
+                        </div>
+                    `).join('') || '<div class="empty-state">No counters yet</div>'}
+                </div>
+
+                <div class="new-counter-form">
+                    <input type="text" id="newCounterName" placeholder="Counter name">
+                    <select id="newCounterType">
+                        <option value="DINE_IN">DINE_IN</option>
+                        <option value="TAKEAWAY">TAKEAWAY</option>
+                        <option value="BILLING">BILLING</option>
+                        <option value="OPD">OPD</option>
+                        <option value="DOCTOR">DOCTOR</option>
+                        <option value="PHARMACY">PHARMACY</option>
+                        <option value="LAB">LAB</option>
+                        <option value="GENERAL">GENERAL</option>
+                        <option value="ACCOUNT">ACCOUNT</option>
+                        <option value="LOAN">LOAN</option>
+                        <option value="CUTS">CUTS</option>
+                        <option value="SPA">SPA</option>
+                    </select>
+                    <input type="text" id="newCounterStaff" placeholder="Staff name (optional)">
+                    <button class="btn btn-primary" onclick="addCounter(${businessId})">+ Add Counter</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Recent Feedback</h3>
+                ${feedback.length === 0
+                    ? '<div class="empty-state">No feedback yet</div>'
+                    : feedback.slice(0, 5).map(f => `
+                        <div class="feedback-item">
+                            <div class="feedback-header">
+                                <span>${f.customerName} — Token #${f.tokenNumber}</span>
+                                <span class="stars">${'★'.repeat(f.overallRating)}${'☆'.repeat(5 - f.overallRating)}</span>
+                            </div>
+                            ${f.comment ? `<div class="feedback-comment">"${f.comment}"</div>` : ''}
+                        </div>
+                    `).join('')
+                }
+            </div>
+        `;
+    }
+
+    async function toggleQueue(businessId, open) {
+        const endpoint = open ? 'open' : 'close';
+        await fetch(`${API}/api/business/queue/${endpoint}/${businessId}`, {
+            method: 'PUT',
+            headers: authHeaders()
+        });
+        loadBusinesses();
+    }
+
+    async function callNext(counterId) {
+        const res = await fetch(`${API}/api/token/next/${counterId}`, {
+            method: 'PUT',
+            headers: authHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || 'No customers waiting');
+        }
+        loadBusinessDetails(currentBusinessId);
+    }
+
+    async function toggleCounter(counterId, activate) {
+        const endpoint = activate ? 'activate' : 'deactivate';
+        await fetch(`${API}/api/counter/${endpoint}/${counterId}`, {
+            method: 'PUT',
+            headers: authHeaders()
+        });
+        loadBusinessDetails(currentBusinessId);
+    }
+
+    async function addCounter(businessId) {
+        const counterName = document.getElementById('newCounterName').value;
+        const counterType = document.getElementById('newCounterType').value;
+        const staffName = document.getElementById('newCounterStaff').value;
+
+        if (!counterName) { alert('Counter name required'); return; }
+
+        await fetch(`${API}/api/counter/create`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ businessId, counterName, counterType, staffName })
+        });
+
+        loadBusinessDetails(businessId);
+    }
+
+// Auto-refresh dashboard every 10 seconds — skip if user is typing
+setInterval(() => {
+    const activeEl = document.activeElement;
+    const isTyping = activeEl && (
+        activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT'
+    );
+
+    if (currentBusinessId && !isTyping) {
+        loadBusinessDetails(currentBusinessId);
+    }
+}, 10000);
+</script>
+
+</body>
+</html>

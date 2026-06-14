@@ -96,20 +96,27 @@ public class BusinessService {
         business.setIsQueueOpen(true);
         businessRepository.save(business);
 
-        // Create queue session for today
-        QueueSession session = QueueSession.builder()
-                .business(business)
-                .date(LocalDate.now())
-                .openedAt(LocalDateTime.now())
-                .totalServed(0)
-                .totalAbandoned(0)
-                .avgWaitMins(0)
-                .maxQueueReached(0)
-                .avgPartySize(0.0)
-                .revenueEstimate(0.0)
-                .build();
+        // Only create session if one doesn't exist for today
+        boolean sessionExists = queueSessionRepository
+                .findByBusinessIdAndDate(businessId, LocalDate.now())
+                .isPresent();
 
-        queueSessionRepository.save(session);
+        if (!sessionExists) {
+            QueueSession session = QueueSession.builder()
+                    .business(business)
+                    .date(LocalDate.now())
+                    .openedAt(LocalDateTime.now())
+                    .totalServed(0)
+                    .totalAbandoned(0)
+                    .avgWaitMins(0)
+                    .maxQueueReached(0)
+                    .avgPartySize(0.0)
+                    .revenueEstimate(0.0)
+                    .build();
+
+            queueSessionRepository.save(session);
+        }
+
         return mapToResponse(business);
     }
 
