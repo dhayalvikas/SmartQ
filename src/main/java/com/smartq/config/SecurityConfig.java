@@ -31,23 +31,37 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Static files — no login needed
-                        .requestMatchers("/**.html").permitAll()
-                        .requestMatchers("/**.css").permitAll()
-                        .requestMatchers("/**.js").permitAll()
-                        // Public endpoints — no login needed
+                        // All static HTML, CSS, JS files
+                        .requestMatchers(
+                                "/*.html",
+                                "/**/*.html",
+                                "/*.css",
+                                "/**/*.css",
+                                "/*.js",
+                                "/**/*.js",
+                                "/*.png",
+                                "/*.ico",
+                                "/error",
+                                "/webjars/**",
+                                "/static/**",
+                                "/resources/**"
+                        ).permitAll()
+                        // Public API endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/display/**").permitAll()
+                        .requestMatchers("/api/token/counters/**").permitAll()
                         .requestMatchers("/join/**").permitAll()
-                        // Everything else needs login
+                        // Everything else requires JWT
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(
+                        jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }

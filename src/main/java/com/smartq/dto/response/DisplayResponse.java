@@ -17,6 +17,7 @@ public class DisplayResponse {
     @Data
     @Builder
     public static class CounterDisplayInfo {
+        private Long counterId;
         private String counterName;
         private String counterType;
         private Integer currentToken;

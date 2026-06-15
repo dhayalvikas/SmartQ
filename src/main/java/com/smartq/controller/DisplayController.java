@@ -43,6 +43,7 @@ public class DisplayController {
                                     counter.getId(), TokenStatus.WAITING);
 
                     return DisplayResponse.CounterDisplayInfo.builder()
+                            .counterId(counter.getId())
                             .counterName(counter.getCounterName())
                             .counterType(counter.getCounterType()
                                     .name())

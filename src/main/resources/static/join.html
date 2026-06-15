@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartQ — Join Queue</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .logo { font-size: 2rem; font-weight: bold; color: #3b82f6; margin: 30px 0 5px; }
+        .tagline { color: #64748b; font-size: 0.9rem; margin-bottom: 30px; }
+        .card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid #334155;
+            margin-bottom: 16px;
+        }
+        .business-header { text-align: center; margin-bottom: 20px; }
+        .business-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background: #1e3a5f;
+            color: #60a5fa;
+            margin-bottom: 8px;
+        }
+        .business-name { font-size: 1.5rem; font-weight: bold; margin-bottom: 4px; }
+        .business-address { color: #64748b; font-size: 0.85rem; }
+        .queue-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; margin-top: 10px; }
+        .queue-open { background: #064e3b; color: #34d399; }
+        .queue-closed { background: #7f1d1d; color: #fca5a5; }
+        h3 { font-size: 1rem; margin-bottom: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .counter-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            background: #0f172a;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 2px solid #334155;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .counter-option:hover { border-color: #3b82f6; }
+        .counter-option.selected { border-color: #3b82f6; background: #1e3a5f; }
+        .counter-name-text { font-weight: bold; }
+        .counter-meta-text { font-size: 0.8rem; color: #64748b; margin-top: 3px; }
+        .waiting-badge { background: #1e293b; color: #f59e0b; padding: 4px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; }
+        .input-group { margin-bottom: 14px; }
+        .input-group label { display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 6px; }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+        .input-group input:focus { outline: none; border-color: #3b82f6; }
+        .tabs { display: flex; margin-bottom: 20px; background: #0f172a; border-radius: 10px; padding: 4px; }
+        .tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; color: #64748b; font-size: 0.9rem; }
+        .tab.active { background: #3b82f6; color: white; font-weight: bold; }
+        .btn-main {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-main:hover { background: #2563eb; }
+        .btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
+        .error-msg { color: #fca5a5; font-size: 0.85rem; margin-top: 8px; text-align: center; }
+        .party-size-row { display: flex; align-items: center; gap: 12px; }
+        .party-size-row button {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .party-size-row button:hover { border-color: #3b82f6; }
+        .party-count { font-size: 1.5rem; font-weight: bold; color: #3b82f6; min-width: 30px; text-align: center; }
+        .wait-estimate { background: #0f172a; border-radius: 10px; padding: 14px; text-align: center; margin-top: 16px; border: 1px solid #334155; }
+        .wait-estimate .mins { font-size: 2rem; font-weight: bold; color: #f59e0b; }
+        .wait-estimate .label { color: #64748b; font-size: 0.85rem; margin-top: 4px; }
+        .closed-overlay { text-align: center; padding: 40px 20px; }
+        .closed-icon { font-size: 3rem; margin-bottom: 16px; }
+        .footer { color: #334155; font-size: 0.8rem; margin-top: 20px; text-align: center; }
+        #step2, #step3 { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="logo">SmartQ</div>
+<div class="tagline">Queue smarter, wait less</div>
+
+<div class="card" id="step1">
+    <div class="business-header">
+        <div class="business-type-badge" id="businessType">Loading...</div>
+        <div class="business-name" id="businessName">Loading...</div>
+        <div class="business-address" id="businessAddress"></div>
+        <div id="queueBadge"></div>
+    </div>
+    <div id="countersSection">
+        <h3>Select Service</h3>
+        <div id="countersList"></div>
+    </div>
+</div>
+
+<div class="card" id="step2">
+    <h3>Your Details</h3>
+    <div class="tabs">
+        <div class="tab active" id="loginTab" onclick="switchTab('login')">Login</div>
+        <div class="tab" id="registerTab" onclick="switchTab('register')">New here?</div>
+    </div>
+    <div id="loginForm">
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="loginEmail" placeholder="your@email.com">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="Password">
+        </div>
+        <button class="btn-main" onclick="loginCustomer()">Continue →</button>
+        <div class="error-msg" id="loginError"></div>
+    </div>
+    <div id="registerForm" style="display:none">
+        <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="regName" placeholder="Your name">
+        </div>
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="regEmail" placeholder="your@email.com">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="regPassword" placeholder="Min 6 characters">
+        </div>
+        <div class="input-group">
+            <label>Phone (optional)</label>
+            <input type="tel" id="regPhone" placeholder="Phone number">
+        </div>
+        <button class="btn-main" onclick="registerCustomer()">Register & Continue →</button>
+        <div class="error-msg" id="registerError"></div>
+    </div>
+</div>
+
+<div class="card" id="step3">
+    <h3>Almost There!</h3>
+    <div style="margin-bottom:20px;">
+        <div style="color:#94a3b8; font-size:0.85rem; margin-bottom:6px;">Selected Counter</div>
+        <div style="font-weight:bold;" id="selectedCounterName">--</div>
+    </div>
+    <div class="input-group">
+        <label>How many people in your group?</label>
+        <div class="party-size-row">
+            <button onclick="changeParty(-1)">−</button>
+            <div class="party-count" id="partyCount">1</div>
+            <button onclick="changeParty(1)">+</button>
+            <span style="color:#64748b; font-size:0.85rem;">person(s)</span>
+        </div>
+    </div>
+    <div class="input-group">
+        <label>Special Request (optional)</label>
+        <input type="text" id="specialRequest" placeholder="e.g. window seat, wheelchair access">
+    </div>
+    <div class="wait-estimate">
+        <div class="mins" id="estimatedWait">--</div>
+        <div class="label">estimated wait (minutes)</div>
+    </div>
+    <button class="btn-main" id="getTokenBtn" onclick="getToken()">🎟️ Get My Token</button>
+    <div class="error-msg" id="tokenError"></div>
+</div>
+
+<div class="footer">SmartQ — Universal Queue Management</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const businessId = params.get('businessId') || 1;
+    const API = '';
+
+    let authToken = localStorage.getItem('smartq_token');
+    let selectedCounter = JSON.parse(localStorage.getItem('smartq_counter') || 'null');
+    let partySize = 1;
+    let businessData = null;
+
+    // If already logged in and counter selected, show step 3 immediately
+    if (authToken && selectedCounter) {
+        document.getElementById('step3').style.display = 'block';
+        document.getElementById('selectedCounterName').textContent = selectedCounter.counterName;
+        updateWaitEstimate();
+    }
+
+    async function loadBusiness() {
+        try {
+            const res = await fetch(`${API}/api/display/${businessId}`);
+            if (!res.ok) throw new Error('Failed to load business');
+            const data = await res.json();
+            businessData = data;
+
+            document.getElementById('businessType').textContent = data.businessType;
+            document.getElementById('businessName').textContent = data.businessName;
+            document.getElementById('businessAddress').textContent = data.city || '';
+
+            const badge = document.getElementById('queueBadge');
+
+            if (!data.isQueueOpen) {
+                badge.innerHTML = `<span class="queue-badge queue-closed">🔴 Queue is Closed</span>`;
+                document.getElementById('countersSection').innerHTML =
+                    `<div class="closed-overlay">
+                        <div class="closed-icon">🔴</div>
+                        <div style="font-size:1.1rem;margin-bottom:8px;">Queue is currently closed</div>
+                        <div style="color:#64748b;">Please check back later.</div>
+                    </div>`;
+                return;
+            }
+
+            badge.innerHTML = `<span class="queue-badge queue-open">🟢 Queue is Open</span>`;
+
+            // Use counters directly from display API — has counterId, counterName, totalWaiting
+            const counters = data.counters || [];
+            const list = document.getElementById('countersList');
+            list.innerHTML = '';
+
+            if (counters.length === 0) {
+                list.innerHTML = '<div style="color:#64748b;text-align:center;padding:20px;">No counters available</div>';
+                return;
+            }
+
+            counters.forEach(counter => {
+                if (!counter.isActive) return;
+
+                const div = document.createElement('div');
+                div.className = 'counter-option';
+                div.id = `counter-${counter.counterId}`;
+
+                if (selectedCounter && selectedCounter.counterId === counter.counterId) {
+                    div.classList.add('selected');
+                }
+
+                // totalWaiting comes directly from display API
+                const waiting = counter.totalWaiting !== undefined ? counter.totalWaiting : 0;
+
+                div.innerHTML = `
+                    <div>
+                        <div class="counter-name-text">${counter.counterName}</div>
+                        <div class="counter-meta-text">${counter.counterType}</div>
+                    </div>
+                    <div class="waiting-badge">${waiting} waiting</div>
+                `;
+                div.onclick = () => selectCounter(counter);
+                list.appendChild(div);
+            });
+
+        } catch (err) {
+            document.getElementById('businessName').textContent = 'Error loading. Please try again.';
+            console.error(err);
+        }
+    }
+
+    function selectCounter(counter) {
+        selectedCounter = counter;
+        localStorage.setItem('smartq_counter', JSON.stringify(counter));
+
+        document.querySelectorAll('.counter-option').forEach(el => el.classList.remove('selected'));
+        const el = document.getElementById(`counter-${counter.counterId}`);
+        if (el) el.classList.add('selected');
+
+        if (authToken) {
+            showStep3();
+        } else {
+            document.getElementById('step2').style.display = 'block';
+            document.getElementById('step2').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function switchTab(tab) {
+        document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+        document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        document.getElementById('loginTab').className = 'tab' + (tab === 'login' ? ' active' : '');
+        document.getElementById('registerTab').className = 'tab' + (tab === 'register' ? ' active' : '');
+    }
+
+    async function loginCustomer() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        if (!email || !password) {
+            document.getElementById('loginError').textContent = 'Please fill in all fields';
+            return;
+        }
+        try {
+            const res = await fetch(`${API}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (!res.ok) throw new Error('Login failed');
+            const data = await res.json();
+            authToken = data.token;
+            localStorage.setItem('smartq_token', authToken);
+            showStep3();
+        } catch (err) {
+            document.getElementById('loginError').textContent = 'Invalid email or password';
+        }
+    }
+
+    async function registerCustomer() {
+        const name = document.getElementById('regName').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        const phone = document.getElementById('regPhone').value;
+        if (!name || !email || !password) {
+            document.getElementById('registerError').textContent = 'Please fill in all required fields';
+            return;
+        }
+        try {
+            const res = await fetch(`${API}/api/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, phone })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Registration failed');
+            }
+            const data = await res.json();
+            authToken = data.token;
+            localStorage.setItem('smartq_token', authToken);
+            showStep3();
+        } catch (err) {
+            document.getElementById('registerError').textContent = err.message;
+        }
+    }
+
+    function showStep3() {
+        if (!selectedCounter) {
+            selectedCounter = JSON.parse(localStorage.getItem('smartq_counter') || 'null');
+        }
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = 'block';
+        document.getElementById('selectedCounterName').textContent =
+            selectedCounter ? selectedCounter.counterName : 'Unknown';
+        document.getElementById('step3').scrollIntoView({ behavior: 'smooth' });
+        updateWaitEstimate();
+    }
+
+    function changeParty(delta) {
+        partySize = Math.max(1, Math.min(20, partySize + delta));
+        document.getElementById('partyCount').textContent = partySize;
+        updateWaitEstimate();
+    }
+
+    function updateWaitEstimate() {
+        if (!selectedCounter) return;
+        const waiting = selectedCounter.totalWaiting || 0;
+        const avgService = 10;
+        let factor = partySize <= 1 ? 1.0 : partySize <= 3 ? 1.2 : partySize <= 5 ? 1.5 : 1.8;
+        const estimate = Math.ceil((waiting + 1) * avgService * factor);
+        document.getElementById('estimatedWait').textContent = estimate;
+    }
+
+    async function getToken() {
+        if (!selectedCounter) {
+            selectedCounter = JSON.parse(localStorage.getItem('smartq_counter') || 'null');
+        }
+        if (!selectedCounter) {
+            document.getElementById('tokenError').textContent = 'Please select a counter first';
+            return;
+        }
+
+        const btn = document.getElementById('getTokenBtn');
+        btn.disabled = true;
+        btn.textContent = 'Getting your token...';
+
+        try {
+            const res = await fetch(`${API}/api/token/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authToken
+                },
+                body: JSON.stringify({
+                    businessId: parseInt(businessId),
+                    counterId: selectedCounter.counterId,
+                    partySize: partySize,
+                    specialRequest: document.getElementById('specialRequest').value || null
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                document.getElementById('tokenError').textContent = data.error || 'Failed to get token';
+                btn.disabled = false;
+                btn.textContent = '🎟️ Get My Token';
+                return;
+            }
+
+            localStorage.removeItem('smartq_counter');
+            window.location.href = `/token-status.html?tokenId=${data.tokenId}`;
+
+        } catch (err) {
+            document.getElementById('tokenError').textContent = 'Something went wrong. Please try again.';
+            btn.disabled = false;
+            btn.textContent = '🎟️ Get My Token';
+        }
+    }
+
+    loadBusiness();
+</script>
+
+</body>
+</html>
