@@ -250,6 +250,71 @@
             border-radius: 6px;
             color: white;
         }
+
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 140px;
+            padding-bottom: 24px;
+            position: relative;
+        }
+
+        .chart-bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .chart-bar {
+            width: 100%;
+            background: #3b82f6;
+            border-radius: 4px 4px 0 0;
+            min-height: 4px;
+            transition: height 0.4s ease;
+        }
+
+        .chart-bar:hover { background: #60a5fa; }
+
+        .chart-label {
+            font-size: 0.65rem;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .chart-value {
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        .analytics-footer {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #334155;
+        }
+
+        .analytics-item {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .analytics-item span {
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 16px 20px; }
+            .main { padding: 20px; }
+            .counter-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -258,8 +323,8 @@
 <div class="login-screen" id="loginScreen">
     <div class="login-card">
         <h2>SmartQ — Owner Login</h2>
-        <input type="email" id="loginEmail" placeholder="Email" value="owner@test.com">
-        <input type="password" id="loginPassword" placeholder="Password" value="owner123">
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password">
         <button onclick="login()">Login</button>
         <div class="error-msg" id="loginError"></div>
     </div>
@@ -328,8 +393,10 @@
     }
 
     function authHeaders() {
-        return { 'Authorization': 'Bearer ' + authToken,
-                 'Content-Type': 'application/json' };
+        return {
+            'Authorization': 'Bearer ' + authToken,
+            'Content-Type': 'application/json'
+        };
     }
 
     async function showDashboard() {
@@ -337,7 +404,6 @@
         document.getElementById('mainContent').style.display = 'block';
         document.getElementById('ownerName').textContent =
             localStorage.getItem('smartq_owner_name') || '';
-
         await loadBusinesses();
     }
 
@@ -362,7 +428,8 @@
         businesses.forEach(b => {
             const tab = document.createElement('div');
             tab.className = 'business-tab' +
-                (b.id === currentBusinessId || (!currentBusinessId && b.id === businesses[0].id)
+                (b.id === currentBusinessId ||
+                (!currentBusinessId && b.id === businesses[0].id)
                     ? ' active' : '');
             tab.textContent = `${b.name} (${b.businessType})`;
             tab.onclick = () => selectBusiness(b.id);
@@ -394,9 +461,24 @@
         const analytics = await analyticsRes.json();
         const feedback = await feedbackRes.json();
 
+        // Build 7-day chart
+        const days = analytics.last7Days || [];
+        const maxVal = Math.max(...days.map(d => d.totalServed || 0), 1);
+        const chartBars = days.map(day => {
+            const h = Math.max(((day.totalServed || 0) / maxVal) * 110, 4);
+            return `
+                <div class="chart-bar-wrap">
+                    <div class="chart-value">${day.totalServed || 0}</div>
+                    <div class="chart-bar" style="height:${h}px"
+                         title="${day.date}: ${day.totalServed || 0} served"></div>
+                    <div class="chart-label">${day.date ? day.date.slice(5) : ''}</div>
+                </div>`;
+        }).join('');
+
         const content = document.getElementById('businessContent');
 
         content.innerHTML = `
+            <!-- Business Info -->
             <div class="section">
                 <h3>
                     ${business.name}
@@ -411,34 +493,74 @@
                     </span>
                 </h3>
                 <div class="counter-meta">
-                    ${business.address}, ${business.city} •
+                    ${business.address || ''}, ${business.city || ''} •
                     Avg Rating: ${business.avgRating?.toFixed(1) || 'N/A'} ⭐
-                    (${business.totalReviews} reviews)
+                    (${business.totalReviews || 0} reviews)
                 </div>
                 <a class="tv-link" href="/tv-display.html?businessId=${businessId}" target="_blank">
                     📺 Open TV Display →
                 </a>
             </div>
 
+            <!-- Today's Stats -->
             <div class="grid">
                 <div class="stat-card">
                     <div class="stat-label">Served Today</div>
-                    <div class="stat-value">${analytics.totalServedToday}</div>
+                    <div class="stat-value">${analytics.totalServedToday || 0}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Waiting Now</div>
-                    <div class="stat-value">${analytics.totalWaitingNow}</div>
+                    <div class="stat-value" style="color:#f59e0b">${analytics.totalWaitingNow || 0}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Abandoned Today</div>
-                    <div class="stat-value">${analytics.totalAbandonedToday}</div>
+                    <div class="stat-value" style="color:#ef4444">${analytics.totalAbandonedToday || 0}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Max Queue Reached</div>
-                    <div class="stat-value">${analytics.maxQueueReachedToday}</div>
+                    <div class="stat-value">${analytics.maxQueueReachedToday || 0}</div>
                 </div>
             </div>
 
+            <!-- 7-Day Chart -->
+            <div class="section">
+                <h3>📈 Last 7 Days — Customers Served</h3>
+                <div class="chart-container">
+                    ${chartBars || '<div class="empty-state">No data yet</div>'}
+                </div>
+                <div class="analytics-footer">
+                    <div class="analytics-item">
+                        Peak Hour: <span style="color:#f59e0b">
+                            ${analytics.peakHourToday !== null && analytics.peakHourToday !== undefined && analytics.totalServedToday > 0
+                                ? analytics.peakHourToday + ':00 - ' + (analytics.peakHourToday + 1) + ':00'
+                                : 'N/A'}
+                        </span>
+                    </div>
+                    <div class="analytics-item">
+                        Avg Wait: <span style="color:#34d399">
+                            ${analytics.avgWaitMinsToday
+                                ? Math.round(analytics.avgWaitMinsToday) + ' mins'
+                                : 'N/A'}
+                        </span>
+                    </div>
+                    <div class="analytics-item">
+                        Avg Party: <span style="color:#3b82f6">
+                            ${analytics.avgPartySizeToday
+                                ? analytics.avgPartySizeToday.toFixed(1)
+                                : 'N/A'}
+                        </span>
+                    </div>
+                    <div class="analytics-item">
+                        Revenue Est: <span style="color:#3b82f6">
+                            ₹${analytics.revenueEstimateToday
+                                ? Math.round(analytics.revenueEstimateToday)
+                                : 0}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Counters -->
             <div class="section">
                 <h3>Counters</h3>
                 <div id="countersList">
@@ -450,7 +572,7 @@
                                 </div>
                                 <div class="counter-meta">
                                     Now Serving: #${c.currentToken || '--'} •
-                                    Served Today: ${c.tokensServedToday} •
+                                    Served Today: ${c.tokensServedToday || 0} •
                                     Staff: ${c.staffName || 'N/A'}
                                 </div>
                             </div>
@@ -490,17 +612,27 @@
                 </div>
             </div>
 
+            <!-- Recent Feedback -->
             <div class="section">
-                <h3>Recent Feedback</h3>
+                <h3>⭐ Recent Feedback</h3>
                 ${feedback.length === 0
                     ? '<div class="empty-state">No feedback yet</div>'
                     : feedback.slice(0, 5).map(f => `
                         <div class="feedback-item">
                             <div class="feedback-header">
-                                <span>${f.customerName} — Token #${f.tokenNumber}</span>
-                                <span class="stars">${'★'.repeat(f.overallRating)}${'☆'.repeat(5 - f.overallRating)}</span>
+                                <span>${f.customerName || 'Customer'} — Token #${f.tokenNumber}</span>
+                                <span class="stars">
+                                    ${'★'.repeat(f.overallRating || 0)}${'☆'.repeat(5 - (f.overallRating || 0))}
+                                </span>
                             </div>
-                            ${f.comment ? `<div class="feedback-comment">"${f.comment}"</div>` : ''}
+                            <div style="color:#64748b;font-size:0.8rem;margin-bottom:4px;">
+                                Wait: ${'★'.repeat(f.waitRating || 0)} •
+                                Service: ${'★'.repeat(f.serviceRating || 0)} •
+                                ${f.wouldReturn ? '👍 Would return' : '👎 Would not return'}
+                            </div>
+                            ${f.comment
+                                ? `<div class="feedback-comment">"${f.comment}"</div>`
+                                : ''}
                         </div>
                     `).join('')
                 }
@@ -523,9 +655,7 @@
             headers: authHeaders()
         });
         const data = await res.json();
-        if (!res.ok) {
-            alert(data.error || 'No customers waiting');
-        }
+        if (!res.ok) alert(data.error || 'No customers waiting');
         loadBusinessDetails(currentBusinessId);
     }
 
@@ -554,17 +684,15 @@
         loadBusinessDetails(businessId);
     }
 
-// Auto-refresh dashboard every 10 seconds — skip if user is typing
-setInterval(() => {
-    const activeEl = document.activeElement;
-    const isTyping = activeEl && (
-        activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT'
-    );
-
-    if (currentBusinessId && !isTyping) {
-        loadBusinessDetails(currentBusinessId);
-    }
-}, 10000);
+    // Auto-refresh every 10 seconds — skip if user is typing
+    setInterval(() => {
+        const activeEl = document.activeElement;
+        const isTyping = activeEl &&
+            (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT');
+        if (currentBusinessId && !isTyping) {
+            loadBusinessDetails(currentBusinessId);
+        }
+    }, 10000);
 </script>
 
 </body>

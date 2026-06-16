@@ -3,6 +3,7 @@ package com.smartq.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -26,42 +27,42 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+    @Order(1)
+    public SecurityFilterChain staticFilterChain(HttpSecurity http)
+            throws Exception {
+        http
+                .securityMatcher(
+                        "/join.html", "/token-status.html",
+                        "/tv-display.html", "/owner-dashboard.html",
+                        "/feedback.html", "/analytics.html", "/admin.html",
+                        "/*.css", "/*.js", "/*.png", "/*.ico"
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                )
+                .csrf(csrf -> csrf.disable());
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http)
             throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // All static HTML, CSS, JS files
-                        .requestMatchers(
-                                "/*.html",
-                                "/**/*.html",
-                                "/*.css",
-                                "/**/*.css",
-                                "/*.js",
-                                "/**/*.js",
-                                "/*.png",
-                                "/*.ico",
-                                "/error",
-                                "/webjars/**",
-                                "/static/**",
-                                "/resources/**"
-                        ).permitAll()
-                        // Public API endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/display/**").permitAll()
                         .requestMatchers("/api/token/counters/**").permitAll()
                         .requestMatchers("/join/**").permitAll()
-                        // Everything else requires JWT
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(
-                        jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
+                .addFilterBefore(jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -73,8 +74,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider =
-                new DaoAuthenticationProvider();
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;

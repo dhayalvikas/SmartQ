@@ -18,22 +18,9 @@
             padding: 20px;
         }
 
-        .header {
-            text-align: center;
-            padding: 30px 0;
-        }
-
-        .logo {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #3b82f6;
-        }
-
-        .business-name {
-            font-size: 1rem;
-            color: #94a3b8;
-            margin-top: 5px;
-        }
+        .header { text-align: center; padding: 30px 0; }
+        .logo { font-size: 1.8rem; font-weight: bold; color: #3b82f6; }
+        .business-name { font-size: 1rem; color: #94a3b8; margin-top: 5px; }
 
         .card {
             background: #1e293b;
@@ -71,26 +58,14 @@
             margin-bottom: 20px;
         }
 
-        .status-waiting {
-            background: #1e3a5f;
-            color: #60a5fa;
-        }
-
+        .status-waiting { background: #1e3a5f; color: #60a5fa; }
         .status-called {
             background: #064e3b;
             color: #34d399;
             animation: pulse 1.5s infinite;
         }
-
-        .status-done {
-            background: #334155;
-            color: #94a3b8;
-        }
-
-        .status-no_show, .status-left {
-            background: #7f1d1d;
-            color: #fca5a5;
-        }
+        .status-done { background: #334155; color: #94a3b8; }
+        .status-no_show, .status-left { background: #7f1d1d; color: #fca5a5; }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -102,25 +77,13 @@
             justify-content: space-between;
             padding: 12px 0;
             border-bottom: 1px solid #334155;
+            text-align: left;
         }
 
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            color: #94a3b8;
-        }
-
-        .info-value {
-            font-weight: bold;
-            color: white;
-        }
-
-        .info-value.highlight {
-            color: #f59e0b;
-            font-size: 1.2rem;
-        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #94a3b8; }
+        .info-value { font-weight: bold; color: white; }
+        .info-value.highlight { color: #f59e0b; font-size: 1.2rem; }
 
         .leave-btn {
             background: #7f1d1d;
@@ -133,15 +96,25 @@
             cursor: pointer;
             width: 100%;
         }
+        .leave-btn:hover { background: #991b1b; }
+        .leave-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        .leave-btn:hover {
-            background: #991b1b;
+        .rate-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            text-decoration: none;
+            text-align: center;
         }
-
-        .leave-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
+        .rate-btn:hover { background: #2563eb; }
 
         .called-message {
             background: #064e3b;
@@ -178,14 +151,10 @@
     <p style="color:#64748b">Loading your token...</p>
 </div>
 
-<div class="footer">
-    SmartQ — Queue smarter, wait less
-</div>
+<div class="footer">SmartQ — Queue smarter, wait less</div>
 <div class="last-updated" id="lastUpdated"></div>
 
 <script>
-    // Get token ID from URL
-    // Usage: token-status.html?tokenId=1
     const params = new URLSearchParams(window.location.search);
     const tokenId = params.get('tokenId');
 
@@ -196,28 +165,20 @@
 
     async function loadStatus() {
         try {
-            // Get token from localStorage (saved during generation)
             const authToken = localStorage.getItem('smartq_token');
 
-            const response = await fetch(
-                `/api/token/status/${tokenId}`, {
-                headers: {
-                    'Authorization': 'Bearer ' + authToken
-                }
+            const response = await fetch(`/api/token/status/${tokenId}`, {
+                headers: { 'Authorization': 'Bearer ' + authToken }
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to load token');
-            }
+            if (!response.ok) throw new Error('Failed to load token');
 
             const data = await response.json();
 
-            document.getElementById('businessName')
-                .textContent = data.businessName;
+            document.getElementById('businessName').textContent = data.businessName;
 
             const card = document.getElementById('card');
-            const statusClass = 'status-' +
-                data.status.toLowerCase();
+            const statusClass = 'status-' + data.status.toLowerCase();
 
             let statusText = data.status;
             let extraContent = '';
@@ -242,78 +203,71 @@
                 ${extraContent}
                 <div class="label">Your Token</div>
                 <div class="token-number">#${data.tokenNumber}</div>
-                <div class="status-badge ${statusClass}">
-                    ${statusText}
-                </div>
+                <div class="status-badge ${statusClass}">${statusText}</div>
+
                 <div class="info-row">
                     <span class="info-label">Counter</span>
                     <span class="info-value">${data.counterName}</span>
                 </div>
+
                 ${data.status === 'WAITING' ? `
                 <div class="info-row">
                     <span class="info-label">Position in Queue</span>
-                    <span class="info-value highlight">
-                        ${data.positionInQueue}
-                    </span>
+                    <span class="info-value highlight">${data.positionInQueue}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Estimated Wait</span>
-                    <span class="info-value highlight">
-                        ${data.estimatedWaitMins} mins
-                    </span>
+                    <span class="info-value highlight">${data.estimatedWaitMins} mins</span>
                 </div>
                 ` : ''}
+
                 <div class="info-row">
                     <span class="info-label">Now Serving</span>
-                    <span class="info-value">
-                        #${data.currentlyServing || '--'}
-                    </span>
+                    <span class="info-value">#${data.currentlyServing || '--'}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Total Waiting</span>
                     <span class="info-value">${data.totalWaiting}</span>
                 </div>
+
                 ${data.status === 'WAITING' ? `
                 <button class="leave-btn" onclick="leaveQueue()">
                     Leave Queue
                 </button>
                 ` : ''}
+
+                ${data.status === 'DONE' ? `
+                <a href="/feedback.html?tokenId=${tokenId}" class="rate-btn">
+                    ⭐ Rate Your Experience
+                </a>
+                ` : ''}
             `;
 
             document.getElementById('lastUpdated').textContent =
-                'Last updated: ' +
-                new Date().toLocaleTimeString('en-IN');
+                'Last updated: ' + new Date().toLocaleTimeString('en-IN');
 
         } catch (error) {
             console.error('Error:', error);
             document.getElementById('card').innerHTML =
-                '<p style="color:#fca5a5">Error loading token. ' +
-                'Please make sure you are logged in.</p>';
+                '<p style="color:#fca5a5">Error loading token. Please make sure you are logged in.</p>';
         }
     }
 
     async function leaveQueue() {
-        if (!confirm('Are you sure you want to leave the queue?')) {
-            return;
-        }
+        if (!confirm('Are you sure you want to leave the queue?')) return;
 
         try {
             const authToken = localStorage.getItem('smartq_token');
-
             await fetch(`/api/token/leave/${tokenId}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': 'Bearer ' + authToken
-                }
+                headers: { 'Authorization': 'Bearer ' + authToken }
             });
-
             loadStatus();
         } catch (error) {
             console.error('Error leaving queue:', error);
         }
     }
 
-    // Load immediately then refresh every 10 seconds
     loadStatus();
     setInterval(loadStatus, 10000);
 </script>

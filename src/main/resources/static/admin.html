@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartQ — Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0f172a; color: white; font-family: Arial, sans-serif; min-height: 100vh; }
+        .header {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-logo { font-size: 1.5rem; font-weight: bold; color: #3b82f6; }
+        .header-sub { color: #64748b; font-size: 0.8rem; }
+        .btn-logout {
+            padding: 8px 16px;
+            background: #7f1d1d;
+            border: none;
+            border-radius: 8px;
+            color: #fca5a5;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .btn-logout:hover { background: #991b1b; }
+        .container { padding: 24px; max-width: 1200px; margin: 0 auto; }
+        .page-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 4px; }
+        .page-sub { color: #64748b; font-size: 0.9rem; margin-bottom: 24px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+        .stat-label { color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .stat-value { font-size: 2rem; font-weight: bold; color: #3b82f6; }
+        .stat-sub { color: #64748b; font-size: 0.8rem; margin-top: 4px; }
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 16px; }
+        .card-title { font-size: 1rem; font-weight: bold; margin-bottom: 16px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 8px; }
+        .type-card { background: #0f172a; border-radius: 10px; padding: 14px; text-align: center; border: 1px solid #334155; }
+        .type-icon { font-size: 1.5rem; margin-bottom: 6px; }
+        .type-name { font-size: 0.75rem; color: #64748b; margin-bottom: 4px; }
+        .type-count { font-size: 1.2rem; font-weight: bold; color: #3b82f6; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #334155; }
+        td { padding: 14px 12px; border-bottom: 1px solid #1e293b; font-size: 0.9rem; }
+        tr:hover td { background: #0f172a; }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .badge-open { background: #064e3b; color: #34d399; }
+        .badge-closed { background: #7f1d1d; color: #fca5a5; }
+        .badge-restaurant { background: #1e3a5f; color: #60a5fa; }
+        .badge-hospital { background: #1a1a3e; color: #a78bfa; }
+        .badge-bank { background: #1a2e1a; color: #4ade80; }
+        .badge-salon { background: #3d1a3d; color: #f0abfc; }
+        .badge-other { background: #2d2d1a; color: #fde68a; }
+        .rating-stars { color: #f59e0b; }
+        .loading { text-align: center; padding: 40px; color: #64748b; }
+        .error-box { background: #7f1d1d; border-radius: 10px; padding: 20px; text-align: center; color: #fca5a5; }
+        .login-box { max-width: 400px; margin: 60px auto; }
+        .input-group { margin-bottom: 14px; }
+        .input-group label { display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 6px; }
+        .input-group input { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; font-size: 1rem; }
+        .input-group input:focus { outline: none; border-color: #3b82f6; }
+        .btn-main { width: 100%; padding: 14px; background: #3b82f6; border: none; border-radius: 10px; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        .btn-main:hover { background: #2563eb; }
+        .error-msg { color: #fca5a5; font-size: 0.85rem; margin-top: 8px; text-align: center; }
+        @media (max-width: 600px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <div class="header-logo">SmartQ Admin</div>
+        <div class="header-sub">Platform Control Panel</div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+</div>
+
+<!-- Login Screen (shown if not admin) -->
+<div class="container" id="loginSection" style="display:none">
+    <div class="login-box">
+        <div class="card">
+            <h3 style="margin-bottom:20px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-size:1rem;">Admin Login</h3>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="adminEmail" placeholder="admin@smartq.com">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="adminPassword" placeholder="Password">
+            </div>
+            <button class="btn-main" onclick="adminLogin()">Login as Admin</button>
+            <div class="error-msg" id="loginError"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard (shown if admin) -->
+<div class="container" id="dashboardSection" style="display:none">
+    <div class="page-title">🛡️ Admin Dashboard</div>
+    <div class="page-sub">Platform-wide statistics and management</div>
+
+    <div id="statsSection"><div class="loading">Loading platform stats...</div></div>
+    <div id="businessesSection"><div class="loading">Loading businesses...</div></div>
+</div>
+
+<script>
+    let authToken = localStorage.getItem('smartq_token');
+    let userRole = localStorage.getItem('smartq_role');
+
+    function logout() {
+        localStorage.removeItem('smartq_token');
+        localStorage.removeItem('smartq_role');
+        location.reload();
+    }
+
+    async function adminLogin() {
+        const email = document.getElementById('adminEmail').value;
+        const password = document.getElementById('adminPassword').value;
+        if (!email || !password) {
+            document.getElementById('loginError').textContent = 'Please fill in all fields';
+            return;
+        }
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (!res.ok) throw new Error('Login failed');
+            const data = await res.json();
+            if (data.role !== 'ADMIN') {
+                document.getElementById('loginError').textContent = 'Access denied. Admin only.';
+                return;
+            }
+            authToken = data.token;
+            localStorage.setItem('smartq_token', authToken);
+            localStorage.setItem('smartq_role', data.role);
+            showDashboard();
+        } catch (err) {
+            document.getElementById('loginError').textContent = 'Invalid credentials';
+        }
+    }
+
+    async function showDashboard() {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('dashboardSection').style.display = 'block';
+        await Promise.all([loadStats(), loadBusinesses()]);
+    }
+
+    async function loadStats() {
+        try {
+            const res = await fetch('/api/admin/stats', {
+                headers: { 'Authorization': 'Bearer ' + authToken }
+            });
+            if (!res.ok) throw new Error('Unauthorized');
+            const d = await res.json();
+
+            const typeIcons = {
+                RESTAURANT: '🍽️', HOSPITAL: '🏥', BANK: '🏦',
+                SALON: '✂️', GOVERNMENT: '🏛️', OTHER: '🏢'
+            };
+
+            document.getElementById('statsSection').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Businesses</div>
+                        <div class="stat-value">${d.totalBusinesses || 0}</div>
+                        <div class="stat-sub">registered on platform</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-value">${d.totalUsers || 0}</div>
+                        <div class="stat-sub">${d.totalOwners || 0} owners · ${d.totalCustomers || 0} customers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Tokens Issued</div>
+                        <div class="stat-value" style="color:#34d399">${d.totalTokensIssued || 0}</div>
+                        <div class="stat-sub">all time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Tokens Served</div>
+                        <div class="stat-value" style="color:#f59e0b">${d.totalTokensServedAllTime || 0}</div>
+                        <div class="stat-sub">customers helped</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🏢 Businesses by Type</div>
+                    <div class="type-grid">
+                        ${[
+                            ['RESTAURANT', d.restaurantCount],
+                            ['HOSPITAL', d.hospitalCount],
+                            ['BANK', d.bankCount],
+                            ['SALON', d.salonCount],
+                            ['GOVERNMENT', d.governmentCount],
+                            ['OTHER', d.otherCount]
+                        ].map(([type, count]) => `
+                            <div class="type-card">
+                                <div class="type-icon">${typeIcons[type]}</div>
+                                <div class="type-name">${type}</div>
+                                <div class="type-count">${count || 0}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            document.getElementById('statsSection').innerHTML =
+                '<div class="error-box">Failed to load stats. Make sure you are logged in as ADMIN.</div>';
+        }
+    }
+
+    async function loadBusinesses() {
+        try {
+            const res = await fetch('/api/admin/businesses', {
+                headers: { 'Authorization': 'Bearer ' + authToken }
+            });
+            if (!res.ok) throw new Error('Unauthorized');
+            const businesses = await res.json();
+
+            const rows = businesses.map(b => `
+                <tr>
+                    <td>${b.id}</td>
+                    <td><strong>${b.name}</strong><br><span style="color:#64748b;font-size:0.8rem;">${b.city || ''}</span></td>
+                    <td><span class="badge badge-${(b.businessType || '').toLowerCase()}">${b.businessType}</span></td>
+                    <td>${b.ownerName || '—'}</td>
+                    <td><span class="rating-stars">★</span> ${b.avgRating ? b.avgRating.toFixed(1) : '—'} <span style="color:#64748b;font-size:0.8rem;">(${b.totalReviews || 0})</span></td>
+                    <td><span class="badge ${b.isQueueOpen ? 'badge-open' : 'badge-closed'}">${b.isQueueOpen ? '🟢 Open' : '🔴 Closed'}</span></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('businessesSection').innerHTML = `
+                <div class="card">
+                    <div class="card-title">🏢 All Businesses (${businesses.length})</div>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Business</th>
+                                    <th>Type</th>
+                                    <th>Owner</th>
+                                    <th>Rating</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            document.getElementById('businessesSection').innerHTML =
+                '<div class="error-box">Failed to load businesses.</div>';
+        }
+    }
+
+    // Init
+    if (authToken) {
+        // Try to load dashboard directly
+        fetch('/api/admin/stats', {
+            headers: { 'Authorization': 'Bearer ' + authToken }
+        }).then(res => {
+            if (res.ok) {
+                showDashboard();
+            } else {
+                document.getElementById('loginSection').style.display = 'block';
+            }
+        }).catch(() => {
+            document.getElementById('loginSection').style.display = 'block';
+        });
+    } else {
+        document.getElementById('loginSection').style.display = 'block';
+    }
+</script>
+</body>
+</html>

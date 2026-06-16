@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartQ — Rate Your Experience</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0f172a;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .logo { font-size: 2rem; font-weight: bold; color: #3b82f6; margin: 30px 0 5px; }
+        .tagline { color: #64748b; font-size: 0.9rem; margin-bottom: 30px; }
+        .card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid #334155;
+            margin-bottom: 16px;
+        }
+        h3 { font-size: 1rem; margin-bottom: 20px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .rating-group { margin-bottom: 20px; }
+        .rating-label { color: #94a3b8; font-size: 0.85rem; margin-bottom: 10px; display: block; }
+        .stars { display: flex; gap: 8px; }
+        .star {
+            font-size: 2rem;
+            cursor: pointer;
+            color: #334155;
+            transition: color 0.2s;
+        }
+        .star.active { color: #f59e0b; }
+        .star:hover { color: #f59e0b; }
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 6px; }
+        .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .input-group textarea:focus { outline: none; border-color: #3b82f6; }
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            background: #0f172a;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #334155;
+        }
+        .toggle-label { color: #94a3b8; font-size: 0.9rem; }
+        .toggle-btns { display: flex; gap: 8px; }
+        .toggle-btn {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .toggle-btn.active-yes { background: #064e3b; color: #34d399; border-color: #34d399; }
+        .toggle-btn.active-no { background: #7f1d1d; color: #fca5a5; border-color: #fca5a5; }
+        .btn-main {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-main:hover { background: #2563eb; }
+        .btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
+        .error-msg { color: #fca5a5; font-size: 0.85rem; margin-top: 8px; text-align: center; }
+        .success-card {
+            text-align: center;
+            padding: 40px 20px;
+            display: none;
+        }
+        .success-icon { font-size: 4rem; margin-bottom: 16px; }
+        .success-title { font-size: 1.5rem; font-weight: bold; color: #34d399; margin-bottom: 8px; }
+        .success-sub { color: #64748b; font-size: 0.9rem; }
+        .footer { color: #334155; font-size: 0.8rem; margin-top: 20px; text-align: center; }
+        .business-info { text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #334155; }
+        .business-info .name { font-size: 1.2rem; font-weight: bold; }
+        .business-info .token { color: #3b82f6; font-size: 0.9rem; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="logo">SmartQ</div>
+<div class="tagline">Queue smarter, wait less</div>
+
+<div class="card" id="feedbackCard">
+    <div class="business-info">
+        <div class="name" id="businessName">Loading...</div>
+        <div class="token" id="tokenInfo"></div>
+    </div>
+
+    <h3>Rate Your Experience</h3>
+
+    <div class="rating-group">
+        <span class="rating-label">⏱️ Wait Time</span>
+        <div class="stars" id="waitStars">
+            <span class="star" onclick="setRating('wait', 1)">★</span>
+            <span class="star" onclick="setRating('wait', 2)">★</span>
+            <span class="star" onclick="setRating('wait', 3)">★</span>
+            <span class="star" onclick="setRating('wait', 4)">★</span>
+            <span class="star" onclick="setRating('wait', 5)">★</span>
+        </div>
+    </div>
+
+    <div class="rating-group">
+        <span class="rating-label">👨‍💼 Service Quality</span>
+        <div class="stars" id="serviceStars">
+            <span class="star" onclick="setRating('service', 1)">★</span>
+            <span class="star" onclick="setRating('service', 2)">★</span>
+            <span class="star" onclick="setRating('service', 3)">★</span>
+            <span class="star" onclick="setRating('service', 4)">★</span>
+            <span class="star" onclick="setRating('service', 5)">★</span>
+        </div>
+    </div>
+
+    <div class="rating-group">
+        <span class="rating-label">⭐ Overall Experience</span>
+        <div class="stars" id="overallStars">
+            <span class="star" onclick="setRating('overall', 1)">★</span>
+            <span class="star" onclick="setRating('overall', 2)">★</span>
+            <span class="star" onclick="setRating('overall', 3)">★</span>
+            <span class="star" onclick="setRating('overall', 4)">★</span>
+            <span class="star" onclick="setRating('overall', 5)">★</span>
+        </div>
+    </div>
+
+    <div class="toggle-row">
+        <span class="toggle-label">Would you visit again?</span>
+        <div class="toggle-btns">
+            <button class="toggle-btn" id="yesBtn" onclick="setWouldReturn(true)">👍 Yes</button>
+            <button class="toggle-btn" id="noBtn" onclick="setWouldReturn(false)">👎 No</button>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>Comments (optional)</label>
+        <textarea id="comment" placeholder="Tell us about your experience..."></textarea>
+    </div>
+
+    <button class="btn-main" id="submitBtn" onclick="submitFeedback()">Submit Feedback</button>
+    <div class="error-msg" id="errorMsg"></div>
+</div>
+
+<div class="card success-card" id="successCard">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Thank You!</div>
+    <div class="success-sub">Your feedback helps businesses improve their service.</div>
+    <br>
+    <button class="btn-main" onclick="window.location.href='/'">Back to Home</button>
+</div>
+
+<div class="footer">SmartQ — Universal Queue Management</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const tokenId = params.get('tokenId');
+    const authToken = localStorage.getItem('smartq_token');
+
+    const ratings = { wait: 0, service: 0, overall: 0 };
+    let wouldReturn = null;
+
+    // Load token info
+    async function loadTokenInfo() {
+        if (!tokenId || !authToken) return;
+        try {
+            const res = await fetch(`/api/token/status/${tokenId}`, {
+                headers: { 'Authorization': 'Bearer ' + authToken }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            document.getElementById('businessName').textContent = data.businessName || 'SmartQ';
+            document.getElementById('tokenInfo').textContent = `Token #${data.tokenNumber} — ${data.counterName}`;
+        } catch (e) {
+            document.getElementById('businessName').textContent = 'SmartQ';
+        }
+    }
+
+    function setRating(type, value) {
+        ratings[type] = value;
+        const starsEl = document.getElementById(type + 'Stars');
+        starsEl.querySelectorAll('.star').forEach((star, i) => {
+            star.classList.toggle('active', i < value);
+        });
+    }
+
+    function setWouldReturn(value) {
+        wouldReturn = value;
+        document.getElementById('yesBtn').className = 'toggle-btn' + (value ? ' active-yes' : '');
+        document.getElementById('noBtn').className = 'toggle-btn' + (!value ? ' active-no' : '');
+    }
+
+    async function submitFeedback() {
+        if (!ratings.wait || !ratings.service || !ratings.overall) {
+            document.getElementById('errorMsg').textContent = 'Please rate all categories';
+            return;
+        }
+        if (wouldReturn === null) {
+            document.getElementById('errorMsg').textContent = 'Please select if you would visit again';
+            return;
+        }
+        if (!tokenId) {
+            document.getElementById('errorMsg').textContent = 'No token found. Please scan QR again.';
+            return;
+        }
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        try {
+            const res = await fetch('/api/feedback/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authToken
+                },
+                body: JSON.stringify({
+                    tokenId: parseInt(tokenId),
+                    waitRating: ratings.wait,
+                    serviceRating: ratings.service,
+                    overallRating: ratings.overall,
+                    comment: document.getElementById('comment').value || null,
+                    wouldReturn: wouldReturn
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                document.getElementById('errorMsg').textContent = data.error || 'Failed to submit feedback';
+                btn.disabled = false;
+                btn.textContent = 'Submit Feedback';
+                return;
+            }
+
+            document.getElementById('feedbackCard').style.display = 'none';
+            document.getElementById('successCard').style.display = 'block';
+
+        } catch (err) {
+            document.getElementById('errorMsg').textContent = 'Something went wrong. Please try again.';
+            btn.disabled = false;
+            btn.textContent = 'Submit Feedback';
+        }
+    }
+
+    loadTokenInfo();
+</script>
+</body>
+</html>

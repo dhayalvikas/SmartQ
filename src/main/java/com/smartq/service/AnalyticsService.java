@@ -51,17 +51,21 @@ public class AnalyticsService {
                 ? todaySession.getTotalServed() : 0;
         int totalAbandonedToday = todaySession != null
                 ? todaySession.getTotalAbandoned() : 0;
-        double avgWaitToday = todaySession != null
-                ? todaySession.getAvgWaitMins() : 0;
-        int peakHourToday = todaySession != null
+        Integer avgWaitToday = todaySession != null
+                ? todaySession.getAvgWaitMins() : null;
+
+        Integer peakHourToday = todaySession != null
                 && todaySession.getPeakHour() != null
-                ? todaySession.getPeakHour() : 0;
+                ? todaySession.getPeakHour() : null;
+
         int maxQueueToday = todaySession != null
                 ? todaySession.getMaxQueueReached() : 0;
-        double avgPartySizeToday = todaySession != null
-                ? todaySession.getAvgPartySize() : 0;
-        double revenueToday = todaySession != null
-                ? todaySession.getRevenueEstimate() : 0;
+
+        Double avgPartySizeToday = todaySession != null
+                ? todaySession.getAvgPartySize() : null;
+
+        Double revenueToday = todaySession != null
+                ? todaySession.getRevenueEstimate() : null;
 
         // Currently waiting count
         int totalWaitingNow = tokenRepository
@@ -89,7 +93,7 @@ public class AnalyticsService {
                 .totalServedToday(totalServedToday)
                 .totalAbandonedToday(totalAbandonedToday)
                 .totalWaitingNow(totalWaitingNow)
-                .avgWaitMinsToday(avgWaitToday)
+                .avgWaitMinsToday(avgWaitToday != null ? avgWaitToday.doubleValue() : null)
                 .peakHourToday(peakHourToday)
                 .maxQueueReachedToday(maxQueueToday)
                 .avgPartySizeToday(avgPartySizeToday)
