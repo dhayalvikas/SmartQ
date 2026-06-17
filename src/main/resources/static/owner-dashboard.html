@@ -6,327 +6,180 @@
     <title>SmartQ — Owner Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background: #0f172a;
-            color: white;
-            font-family: 'Arial', sans-serif;
-            min-height: 100vh;
-        }
-
-        .header {
-            background: #1e293b;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #3b82f6;
-        }
-
+        body { background: #0f172a; color: white; font-family: 'Arial', sans-serif; min-height: 100vh; }
+        .header { background: #1e293b; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #3b82f6; }
         .logo { font-size: 1.8rem; font-weight: bold; color: #3b82f6; }
+        .logout-btn { background: #334155; color: #94a3b8; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
 
-        .logout-btn {
-            background: #334155;
-            color: #94a3b8;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
+        /* Auth Screen */
+        .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
+        .auth-card { background: #1e293b; border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; border: 1px solid #334155; }
+        .auth-card h2 { margin-bottom: 8px; color: #3b82f6; }
+        .auth-card p { color: #64748b; font-size: 0.85rem; margin-bottom: 20px; }
+        .auth-tabs { display: flex; margin-bottom: 20px; background: #0f172a; border-radius: 10px; padding: 4px; }
+        .auth-tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; color: #64748b; font-size: 0.9rem; }
+        .auth-tab.active { background: #3b82f6; color: white; font-weight: bold; }
+        .auth-card input, .auth-card select {
+            width: 100%; padding: 12px; margin-bottom: 12px;
+            background: #0f172a; border: 1px solid #334155;
+            border-radius: 8px; color: white; font-size: 1rem;
         }
-
-        .login-screen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 80vh;
+        .auth-card input:focus { outline: none; border-color: #3b82f6; }
+        .auth-card button {
+            width: 100%; padding: 12px; background: #3b82f6;
+            border: none; border-radius: 8px; color: white;
+            font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 8px;
         }
+        .auth-card button:hover { background: #2563eb; }
+        .error-msg { color: #fca5a5; font-size: 0.85rem; margin-top: 8px; }
+        .success-msg { color: #34d399; font-size: 0.85rem; margin-top: 8px; }
 
-        .login-card {
-            background: #1e293b;
-            border-radius: 16px;
-            padding: 40px;
-            width: 100%;
-            max-width: 380px;
-            border: 1px solid #334155;
-        }
-
-        .login-card h2 { margin-bottom: 20px; color: #3b82f6; }
-
-        .login-card input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 12px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: white;
-            font-size: 1rem;
-        }
-
-        .login-card button {
-            width: 100%;
-            padding: 12px;
-            background: #3b82f6;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-
-        .login-card button:hover { background: #2563eb; }
-
-        .error-msg {
-            color: #fca5a5;
-            font-size: 0.85rem;
-            margin-top: 8px;
-        }
-
+        /* Dashboard */
         .main { padding: 30px 40px; display: none; }
+        .business-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .business-tab { background: #1e293b; border: 1px solid #334155; padding: 10px 20px; border-radius: 10px; cursor: pointer; color: #94a3b8; }
+        .business-tab.active { border-color: #3b82f6; color: #3b82f6; background: #1e3a5f; }
+        .btn-add-business { background: #16a34a; color: white; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: bold; }
+        .btn-add-business:hover { background: #15803d; }
 
-        .business-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+        /* Create Business Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #1e293b; border-radius: 16px; padding: 30px; width: 100%; max-width: 500px; border: 1px solid #334155; max-height: 90vh; overflow-y: auto; }
+        .modal h3 { color: #3b82f6; margin-bottom: 20px; font-size: 1.2rem; }
+        .modal input, .modal select, .modal textarea {
+            width: 100%; padding: 10px 12px; margin-bottom: 12px;
+            background: #0f172a; border: 1px solid #334155;
+            border-radius: 8px; color: white; font-size: 0.95rem;
         }
+        .modal input:focus, .modal select:focus { outline: none; border-color: #3b82f6; }
+        .modal-footer { display: flex; gap: 10px; margin-top: 8px; }
+        .modal-footer button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-confirm { background: #3b82f6; color: white; }
+        .btn-cancel { background: #334155; color: #94a3b8; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-        .business-tab {
-            background: #1e293b;
-            border: 1px solid #334155;
-            padding: 10px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            color: #94a3b8;
-        }
+        /* QR Code section */
+        .qr-section { text-align: center; padding: 20px; background: #0f172a; border-radius: 10px; border: 1px solid #334155; margin-top: 16px; }
+        .qr-section img { width: 200px; height: 200px; border-radius: 8px; }
+        .qr-section p { color: #64748b; font-size: 0.85rem; margin-top: 8px; }
+        .qr-link { color: #3b82f6; font-size: 0.8rem; word-break: break-all; margin-top: 4px; display: block; }
 
-        .business-tab.active {
-            border-color: #3b82f6;
-            color: #3b82f6;
-            background: #1e3a5f;
-        }
+        /* Grid and cards */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+        .stat-label { color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .stat-value { font-size: 2rem; font-weight: bold; color: #3b82f6; }
+        .section { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; }
+        .section h3 { margin-bottom: 16px; color: white; display: flex; justify-content: space-between; align-items: center; }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #334155;
-        }
-
-        .stat-label {
-            color: #94a3b8;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #3b82f6;
-        }
-
-        .section {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #334155;
-        }
-
-        .section h3 {
-            margin-bottom: 16px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .counter-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px;
-            background: #0f172a;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #334155;
-        }
-
+        /* Counters */
+        .counter-row { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #0f172a; border-radius: 8px; margin-bottom: 10px; border: 1px solid #334155; }
         .counter-row.inactive { opacity: 0.5; }
-
         .counter-info { flex: 1; }
-
         .counter-name { font-weight: bold; margin-bottom: 4px; }
-
         .counter-meta { color: #94a3b8; font-size: 0.85rem; }
-
-        .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: bold;
-            margin-left: 8px;
-        }
-
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 8px; }
         .btn-primary { background: #3b82f6; color: white; }
         .btn-success { background: #16a34a; color: white; }
         .btn-danger { background: #dc2626; color: white; }
         .btn-secondary { background: #334155; color: #94a3b8; }
         .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .queue-toggle {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
+        .queue-toggle { display: flex; align-items: center; gap: 12px; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
         .badge-open { background: #064e3b; color: #34d399; }
         .badge-closed { background: #7f1d1d; color: #fca5a5; }
+        .new-counter-form { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+        .new-counter-form input, .new-counter-form select { padding: 8px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: white; }
 
-        .feedback-item {
-            padding: 12px;
-            background: #0f172a;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border: 1px solid #334155;
-        }
-
-        .feedback-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-
-        .stars { color: #f59e0b; }
-
-        .feedback-comment { color: #94a3b8; font-size: 0.9rem; }
-
-        .empty-state {
-            text-align: center;
-            color: #64748b;
-            padding: 30px;
-        }
-
-        .tv-link {
-            display: inline-block;
-            margin-top: 8px;
-            color: #3b82f6;
-            font-size: 0.85rem;
-            text-decoration: none;
-        }
-
-        .new-counter-form {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
-
-        .new-counter-form input,
-        .new-counter-form select {
-            padding: 8px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 6px;
-            color: white;
-        }
-
-        .chart-container {
-            display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            height: 140px;
-            padding-bottom: 24px;
-            position: relative;
-        }
-
-        .chart-bar-wrap {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            height: 100%;
-            justify-content: flex-end;
-        }
-
-        .chart-bar {
-            width: 100%;
-            background: #3b82f6;
-            border-radius: 4px 4px 0 0;
-            min-height: 4px;
-            transition: height 0.4s ease;
-        }
-
+        /* Chart */
+        .chart-container { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding-bottom: 24px; }
+        .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+        .chart-bar { width: 100%; background: #3b82f6; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.4s ease; }
         .chart-bar:hover { background: #60a5fa; }
+        .chart-label { font-size: 0.65rem; color: #64748b; text-align: center; }
+        .chart-value { font-size: 0.7rem; color: #94a3b8; }
+        .analytics-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #334155; }
+        .analytics-item { font-size: 0.85rem; color: #64748b; }
 
-        .chart-label {
-            font-size: 0.65rem;
-            color: #64748b;
-            text-align: center;
-        }
-
-        .chart-value {
-            font-size: 0.7rem;
-            color: #94a3b8;
-        }
-
-        .analytics-footer {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid #334155;
-        }
-
-        .analytics-item {
-            font-size: 0.85rem;
-            color: #64748b;
-        }
-
-        .analytics-item span {
-            font-weight: bold;
-        }
+        /* Feedback */
+        .feedback-item { padding: 12px; background: #0f172a; border-radius: 8px; margin-bottom: 8px; border: 1px solid #334155; }
+        .feedback-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .stars { color: #f59e0b; }
+        .feedback-comment { color: #94a3b8; font-size: 0.9rem; }
+        .empty-state { text-align: center; color: #64748b; padding: 30px; }
+        .tv-link { display: inline-block; margin-top: 8px; color: #3b82f6; font-size: 0.85rem; text-decoration: none; }
 
         @media (max-width: 600px) {
             .header { padding: 16px 20px; }
             .main { padding: 20px; }
             .counter-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .form-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div class="login-screen" id="loginScreen">
-    <div class="login-card">
-        <h2>SmartQ — Owner Login</h2>
-        <input type="email" id="loginEmail" placeholder="Email">
-        <input type="password" id="loginPassword" placeholder="Password">
-        <button onclick="login()">Login</button>
-        <div class="error-msg" id="loginError"></div>
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="authScreen">
+    <div class="auth-card">
+        <h2>SmartQ</h2>
+        <p>Queue Management for your Business</p>
+
+        <div class="auth-tabs">
+            <div class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">Login</div>
+            <div class="auth-tab" id="registerTab" onclick="switchAuthTab('register')">Register</div>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Email">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button onclick="login()">Login →</button>
+            <div class="error-msg" id="loginError"></div>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerForm" style="display:none">
+            <input type="text" id="regName" placeholder="Your Full Name">
+            <input type="email" id="regEmail" placeholder="Email">
+            <input type="password" id="regPassword" placeholder="Password (min 6 chars)">
+            <input type="tel" id="regPhone" placeholder="Phone (optional)">
+            <button onclick="registerOwner()">Create Account →</button>
+            <div class="error-msg" id="registerError"></div>
+            <div class="success-msg" id="registerSuccess"></div>
+        </div>
+    </div>
+</div>
+
+<!-- CREATE BUSINESS MODAL -->
+<div class="modal-overlay" id="createBusinessModal">
+    <div class="modal">
+        <h3>🏢 Create New Business</h3>
+        <input type="text" id="bizName" placeholder="Business Name *">
+        <select id="bizType">
+            <option value="">Select Business Type *</option>
+            <option value="RESTAURANT">🍽️ Restaurant</option>
+            <option value="HOSPITAL">🏥 Hospital</option>
+            <option value="BANK">🏦 Bank</option>
+            <option value="SALON">✂️ Salon</option>
+            <option value="GOVERNMENT">🏛️ Government Office</option>
+            <option value="OTHER">🏢 Other</option>
+        </select>
+        <div class="form-row">
+            <input type="text" id="bizAddress" placeholder="Address *">
+            <input type="text" id="bizCity" placeholder="City *">
+        </div>
+        <div class="form-row">
+            <input type="number" id="bizMaxQueue" placeholder="Max Queue Size" value="50">
+            <input type="number" id="bizAvgService" placeholder="Avg Service (mins)" value="10">
+        </div>
+        <input type="text" id="bizCalledMessage" placeholder="Called message (optional)" value="Your turn has arrived. Please proceed.">
+        <div class="error-msg" id="createBizError"></div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-confirm" onclick="createBusiness()">Create Business</button>
+        </div>
     </div>
 </div>
 
@@ -341,7 +194,9 @@
     </div>
 
     <div class="main" id="mainContent">
-        <div class="business-tabs" id="businessTabs"></div>
+        <div class="business-tabs" id="businessTabs">
+            <button class="btn-add-business" onclick="openModal()">+ Add Business</button>
+        </div>
         <div id="businessContent"></div>
     </div>
 </div>
@@ -354,9 +209,19 @@
 
     if (authToken) showDashboard();
 
+    // ── Auth Tab Switch ──
+    function switchAuthTab(tab) {
+        document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+        document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        document.getElementById('loginTab').className = 'auth-tab' + (tab === 'login' ? ' active' : '');
+        document.getElementById('registerTab').className = 'auth-tab' + (tab === 'register' ? ' active' : '');
+    }
+
+    // ── Login ──
     async function login() {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
+        if (!email || !password) { document.getElementById('loginError').textContent = 'Please fill all fields'; return; }
 
         try {
             const res = await fetch(`${API}/api/auth/login`, {
@@ -364,25 +229,53 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
-
             if (!res.ok) throw new Error('Login failed');
-
             const data = await res.json();
-
             if (data.role !== 'OWNER' && data.role !== 'ADMIN') {
-                document.getElementById('loginError').textContent =
-                    'Only business owners can access this dashboard';
+                document.getElementById('loginError').textContent = 'Only business owners can access this dashboard';
                 return;
             }
-
             authToken = data.token;
             localStorage.setItem('smartq_owner_token', authToken);
             localStorage.setItem('smartq_owner_name', data.name);
             showDashboard();
-
         } catch (err) {
-            document.getElementById('loginError').textContent =
-                'Invalid email or password';
+            document.getElementById('loginError').textContent = 'Invalid email or password';
+        }
+    }
+
+    // ── Register Owner ──
+    async function registerOwner() {
+        const name = document.getElementById('regName').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
+        const phone = document.getElementById('regPhone').value;
+
+        if (!name || !email || !password) {
+            document.getElementById('registerError').textContent = 'Please fill all required fields';
+            return;
+        }
+        if (password.length < 6) {
+            document.getElementById('registerError').textContent = 'Password must be at least 6 characters';
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/api/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, phone, role: 'OWNER' })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+            authToken = data.token;
+            localStorage.setItem('smartq_owner_token', authToken);
+            localStorage.setItem('smartq_owner_name', data.name);
+            document.getElementById('registerSuccess').textContent = 'Account created! Loading dashboard...';
+            setTimeout(() => showDashboard(), 1000);
+        } catch (err) {
+            document.getElementById('registerError').textContent = err.message;
         }
     }
 
@@ -393,44 +286,115 @@
     }
 
     function authHeaders() {
-        return {
-            'Authorization': 'Bearer ' + authToken,
-            'Content-Type': 'application/json'
-        };
+        return { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' };
     }
 
     async function showDashboard() {
-        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
-        document.getElementById('ownerName').textContent =
-            localStorage.getItem('smartq_owner_name') || '';
+        document.getElementById('ownerName').textContent = localStorage.getItem('smartq_owner_name') || '';
         await loadBusinesses();
     }
 
+    // ── Modal ──
+    function openModal() {
+        document.getElementById('createBusinessModal').classList.add('show');
+    }
+
+    function closeModal() {
+        document.getElementById('createBusinessModal').classList.remove('show');
+        document.getElementById('createBizError').textContent = '';
+    }
+
+    // ── Create Business ──
+    async function createBusiness() {
+        const name = document.getElementById('bizName').value;
+        const businessType = document.getElementById('bizType').value;
+        const address = document.getElementById('bizAddress').value;
+        const city = document.getElementById('bizCity').value;
+        const maxQueueSize = parseInt(document.getElementById('bizMaxQueue').value) || 50;
+        const avgServiceMins = parseInt(document.getElementById('bizAvgService').value) || 10;
+        const calledMessage = document.getElementById('bizCalledMessage').value;
+
+        if (!name || !businessType || !address || !city) {
+            document.getElementById('createBizError').textContent = 'Please fill all required fields';
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/api/business/create`, {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ name, businessType, address, city, maxQueueSize, avgServiceMins, calledMessage })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to create business');
+
+            closeModal();
+            // Clear form
+            ['bizName', 'bizAddress', 'bizCity'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('bizType').value = '';
+
+            await loadBusinesses();
+
+            // Switch to new business and show QR
+            if (data.id) {
+                currentBusinessId = data.id;
+                showQrCode(data);
+            }
+        } catch (err) {
+            document.getElementById('createBizError').textContent = err.message;
+        }
+    }
+
+    function showQrCode(business) {
+        if (!business.qrCodeUrl) return;
+        const content = document.getElementById('businessContent');
+        const qrSection = document.createElement('div');
+        qrSection.className = 'section';
+        qrSection.innerHTML = `
+            <h3>✅ Business Created Successfully!</h3>
+            <div class="qr-section">
+                <p style="color:#34d399;font-size:1rem;margin-bottom:16px;">Your QR Code is ready! Print and place it at your entrance.</p>
+                <img src="${business.qrCodeUrl}" alt="QR Code">
+                <p>Customers scan this to join your queue</p>
+                <a class="qr-link" href="#" onclick="downloadQR('${business.qrCodeUrl}', '${business.name}')">⬇️ Download QR Code</a>
+            </div>
+        `;
+        content.insertBefore(qrSection, content.firstChild);
+        setTimeout(() => qrSection.remove(), 30000);
+    }
+
+    function downloadQR(base64, name) {
+        const link = document.createElement('a');
+        link.href = base64;
+        link.download = `SmartQ-${name}-QR.png`;
+        link.click();
+    }
+
+    // ── Load Businesses ──
     async function loadBusinesses() {
-        const res = await fetch(`${API}/api/business/my`, {
-            headers: authHeaders()
-        });
-
+        const res = await fetch(`${API}/api/business/my`, { headers: authHeaders() });
         if (!res.ok) { logout(); return; }
-
         businesses = await res.json();
 
         const tabsDiv = document.getElementById('businessTabs');
-        tabsDiv.innerHTML = '';
+        tabsDiv.innerHTML = '<button class="btn-add-business" onclick="openModal()">+ Add Business</button>';
 
         if (businesses.length === 0) {
-            document.getElementById('businessContent').innerHTML =
-                '<div class="empty-state">No businesses yet. Create one via API.</div>';
+            document.getElementById('businessContent').innerHTML = `
+                <div class="section" style="text-align:center;padding:40px;">
+                    <div style="font-size:3rem;margin-bottom:16px;">🏢</div>
+                    <div style="font-size:1.2rem;margin-bottom:8px;">No businesses yet</div>
+                    <div style="color:#64748b;margin-bottom:20px;">Click "+ Add Business" to get started</div>
+                    <button class="btn btn-primary" onclick="openModal()">+ Create Your First Business</button>
+                </div>`;
             return;
         }
 
         businesses.forEach(b => {
             const tab = document.createElement('div');
-            tab.className = 'business-tab' +
-                (b.id === currentBusinessId ||
-                (!currentBusinessId && b.id === businesses[0].id)
-                    ? ' active' : '');
+            tab.className = 'business-tab' + (b.id === currentBusinessId || (!currentBusinessId && b.id === businesses[0].id) ? ' active' : '');
             tab.textContent = `${b.name} (${b.businessType})`;
             tab.onclick = () => selectBusiness(b.id);
             tabsDiv.appendChild(tab);
@@ -443,13 +407,15 @@
     function selectBusiness(id) {
         currentBusinessId = id;
         document.querySelectorAll('.business-tab').forEach((tab, i) => {
-            tab.classList.toggle('active', businesses[i].id === id);
+            tab.classList.toggle('active', businesses[i]?.id === id);
         });
         loadBusinessDetails(id);
     }
 
+    // ── Load Business Details ──
     async function loadBusinessDetails(businessId) {
         const business = businesses.find(b => b.id === businessId);
+        if (!business) return;
 
         const [countersRes, analyticsRes, feedbackRes] = await Promise.all([
             fetch(`${API}/api/counter/list/${businessId}`, { headers: authHeaders() }),
@@ -461,24 +427,20 @@
         const analytics = await analyticsRes.json();
         const feedback = await feedbackRes.json();
 
-        // Build 7-day chart
+        // Chart
         const days = analytics.last7Days || [];
         const maxVal = Math.max(...days.map(d => d.totalServed || 0), 1);
-        const chartBars = days.map(day => {
+        const chartBars = days.length > 0 ? days.map(day => {
             const h = Math.max(((day.totalServed || 0) / maxVal) * 110, 4);
             return `
                 <div class="chart-bar-wrap">
                     <div class="chart-value">${day.totalServed || 0}</div>
-                    <div class="chart-bar" style="height:${h}px"
-                         title="${day.date}: ${day.totalServed || 0} served"></div>
+                    <div class="chart-bar" style="height:${h}px" title="${day.date}: ${day.totalServed || 0} served"></div>
                     <div class="chart-label">${day.date ? day.date.slice(5) : ''}</div>
                 </div>`;
-        }).join('');
+        }).join('') : '<div class="empty-state">No data yet — open the queue to start tracking</div>';
 
-        const content = document.getElementById('businessContent');
-
-        content.innerHTML = `
-            <!-- Business Info -->
+        document.getElementById('businessContent').innerHTML = `
             <div class="section">
                 <h3>
                     ${business.name}
@@ -488,8 +450,7 @@
                         </span>
                         ${business.isQueueOpen
                             ? `<button class="btn btn-danger" onclick="toggleQueue(${businessId}, false)">Close Queue</button>`
-                            : `<button class="btn btn-success" onclick="toggleQueue(${businessId}, true)">Open Queue</button>`
-                        }
+                            : `<button class="btn btn-success" onclick="toggleQueue(${businessId}, true)">Open Queue</button>`}
                     </span>
                 </h3>
                 <div class="counter-meta">
@@ -497,12 +458,16 @@
                     Avg Rating: ${business.avgRating?.toFixed(1) || 'N/A'} ⭐
                     (${business.totalReviews || 0} reviews)
                 </div>
-                <a class="tv-link" href="/tv-display.html?businessId=${businessId}" target="_blank">
-                    📺 Open TV Display →
-                </a>
+                <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;">
+                    <a class="tv-link" href="/tv-display.html?businessId=${businessId}" target="_blank">📺 Open TV Display →</a>
+                    ${business.qrCodeUrl ? `<a class="tv-link" href="#" onclick="downloadQR('${business.qrCodeUrl}', '${business.name}')">⬇️ Download QR Code</a>` : ''}
+                </div>
+                ${business.qrCodeUrl ? `
+                <div style="margin-top:16px;">
+                    <img src="${business.qrCodeUrl}" style="width:120px;height:120px;border-radius:8px;" alt="QR">
+                </div>` : ''}
             </div>
 
-            <!-- Today's Stats -->
             <div class="grid">
                 <div class="stat-card">
                     <div class="stat-label">Served Today</div>
@@ -522,75 +487,34 @@
                 </div>
             </div>
 
-            <!-- 7-Day Chart -->
             <div class="section">
                 <h3>📈 Last 7 Days — Customers Served</h3>
-                <div class="chart-container">
-                    ${chartBars || '<div class="empty-state">No data yet</div>'}
-                </div>
+                <div class="chart-container">${chartBars}</div>
                 <div class="analytics-footer">
-                    <div class="analytics-item">
-                        Peak Hour: <span style="color:#f59e0b">
-                            ${analytics.peakHourToday !== null && analytics.peakHourToday !== undefined && analytics.totalServedToday > 0
-                                ? analytics.peakHourToday + ':00 - ' + (analytics.peakHourToday + 1) + ':00'
-                                : 'N/A'}
-                        </span>
-                    </div>
-                    <div class="analytics-item">
-                        Avg Wait: <span style="color:#34d399">
-                            ${analytics.avgWaitMinsToday
-                                ? Math.round(analytics.avgWaitMinsToday) + ' mins'
-                                : 'N/A'}
-                        </span>
-                    </div>
-                    <div class="analytics-item">
-                        Avg Party: <span style="color:#3b82f6">
-                            ${analytics.avgPartySizeToday
-                                ? analytics.avgPartySizeToday.toFixed(1)
-                                : 'N/A'}
-                        </span>
-                    </div>
-                    <div class="analytics-item">
-                        Revenue Est: <span style="color:#3b82f6">
-                            ₹${analytics.revenueEstimateToday
-                                ? Math.round(analytics.revenueEstimateToday)
-                                : 0}
-                        </span>
-                    </div>
+                    <div class="analytics-item">Peak Hour: <span style="color:#f59e0b">${analytics.peakHourToday !== null && analytics.peakHourToday !== undefined && analytics.totalServedToday > 0 ? analytics.peakHourToday + ':00 - ' + (analytics.peakHourToday + 1) + ':00' : 'N/A'}</span></div>
+                    <div class="analytics-item">Avg Wait: <span style="color:#34d399">${analytics.avgWaitMinsToday ? Math.round(analytics.avgWaitMinsToday) + ' mins' : 'N/A'}</span></div>
+                    <div class="analytics-item">Avg Party: <span style="color:#3b82f6">${analytics.avgPartySizeToday ? analytics.avgPartySizeToday.toFixed(1) : 'N/A'}</span></div>
+                    <div class="analytics-item">Revenue Est: <span style="color:#3b82f6">₹${analytics.revenueEstimateToday ? Math.round(analytics.revenueEstimateToday) : 0}</span></div>
                 </div>
             </div>
 
-            <!-- Counters -->
             <div class="section">
                 <h3>Counters</h3>
                 <div id="countersList">
-                    ${counters.map(c => `
+                    ${counters.length > 0 ? counters.map(c => `
                         <div class="counter-row ${!c.isActive ? 'inactive' : ''}">
                             <div class="counter-info">
-                                <div class="counter-name">
-                                    ${c.counterName} — ${c.counterType}
-                                </div>
-                                <div class="counter-meta">
-                                    Now Serving: #${c.currentToken || '--'} •
-                                    Served Today: ${c.tokensServedToday || 0} •
-                                    Staff: ${c.staffName || 'N/A'}
-                                </div>
+                                <div class="counter-name">${c.counterName} — ${c.counterType}</div>
+                                <div class="counter-meta">Now Serving: #${c.currentToken || '--'} • Served Today: ${c.tokensServedToday || 0} • Staff: ${c.staffName || 'N/A'}</div>
                             </div>
                             <div>
-                                <button class="btn btn-primary"
-                                    onclick="callNext(${c.id})"
-                                    ${!c.isActive || !business.isQueueOpen ? 'disabled' : ''}>
-                                    Call Next
-                                </button>
+                                <button class="btn btn-primary" onclick="callNext(${c.id})" ${!c.isActive || !business.isQueueOpen ? 'disabled' : ''}>Call Next</button>
                                 ${c.isActive
                                     ? `<button class="btn btn-secondary" onclick="toggleCounter(${c.id}, false)">Deactivate</button>`
-                                    : `<button class="btn btn-success" onclick="toggleCounter(${c.id}, true)">Activate</button>`
-                                }
+                                    : `<button class="btn btn-success" onclick="toggleCounter(${c.id}, true)">Activate</button>`}
                             </div>
-                        </div>
-                    `).join('') || '<div class="empty-state">No counters yet</div>'}
+                        </div>`).join('') : '<div class="empty-state">No counters yet — add one below</div>'}
                 </div>
-
                 <div class="new-counter-form">
                     <input type="text" id="newCounterName" placeholder="Counter name">
                     <select id="newCounterType">
@@ -612,48 +536,33 @@
                 </div>
             </div>
 
-            <!-- Recent Feedback -->
             <div class="section">
                 <h3>⭐ Recent Feedback</h3>
-                ${feedback.length === 0
-                    ? '<div class="empty-state">No feedback yet</div>'
-                    : feedback.slice(0, 5).map(f => `
+                ${feedback.length === 0 ? '<div class="empty-state">No feedback yet</div>' :
+                    feedback.slice(0, 5).map(f => `
                         <div class="feedback-item">
                             <div class="feedback-header">
                                 <span>${f.customerName || 'Customer'} — Token #${f.tokenNumber}</span>
-                                <span class="stars">
-                                    ${'★'.repeat(f.overallRating || 0)}${'☆'.repeat(5 - (f.overallRating || 0))}
-                                </span>
+                                <span class="stars">${'★'.repeat(f.overallRating || 0)}${'☆'.repeat(5 - (f.overallRating || 0))}</span>
                             </div>
                             <div style="color:#64748b;font-size:0.8rem;margin-bottom:4px;">
-                                Wait: ${'★'.repeat(f.waitRating || 0)} •
-                                Service: ${'★'.repeat(f.serviceRating || 0)} •
+                                Wait: ${'★'.repeat(f.waitRating || 0)} • Service: ${'★'.repeat(f.serviceRating || 0)} •
                                 ${f.wouldReturn ? '👍 Would return' : '👎 Would not return'}
                             </div>
-                            ${f.comment
-                                ? `<div class="feedback-comment">"${f.comment}"</div>`
-                                : ''}
-                        </div>
-                    `).join('')
-                }
+                            ${f.comment ? `<div class="feedback-comment">"${f.comment}"</div>` : ''}
+                        </div>`).join('')}
             </div>
         `;
     }
 
     async function toggleQueue(businessId, open) {
         const endpoint = open ? 'open' : 'close';
-        await fetch(`${API}/api/business/queue/${endpoint}/${businessId}`, {
-            method: 'PUT',
-            headers: authHeaders()
-        });
+        await fetch(`${API}/api/business/queue/${endpoint}/${businessId}`, { method: 'PUT', headers: authHeaders() });
         loadBusinesses();
     }
 
     async function callNext(counterId) {
-        const res = await fetch(`${API}/api/token/next/${counterId}`, {
-            method: 'PUT',
-            headers: authHeaders()
-        });
+        const res = await fetch(`${API}/api/token/next/${counterId}`, { method: 'PUT', headers: authHeaders() });
         const data = await res.json();
         if (!res.ok) alert(data.error || 'No customers waiting');
         loadBusinessDetails(currentBusinessId);
@@ -661,10 +570,7 @@
 
     async function toggleCounter(counterId, activate) {
         const endpoint = activate ? 'activate' : 'deactivate';
-        await fetch(`${API}/api/counter/${endpoint}/${counterId}`, {
-            method: 'PUT',
-            headers: authHeaders()
-        });
+        await fetch(`${API}/api/counter/${endpoint}/${counterId}`, { method: 'PUT', headers: authHeaders() });
         loadBusinessDetails(currentBusinessId);
     }
 
@@ -672,28 +578,19 @@
         const counterName = document.getElementById('newCounterName').value;
         const counterType = document.getElementById('newCounterType').value;
         const staffName = document.getElementById('newCounterStaff').value;
-
         if (!counterName) { alert('Counter name required'); return; }
-
         await fetch(`${API}/api/counter/create`, {
-            method: 'POST',
-            headers: authHeaders(),
+            method: 'POST', headers: authHeaders(),
             body: JSON.stringify({ businessId, counterName, counterType, staffName })
         });
-
         loadBusinessDetails(businessId);
     }
 
-    // Auto-refresh every 10 seconds — skip if user is typing
     setInterval(() => {
         const activeEl = document.activeElement;
-        const isTyping = activeEl &&
-            (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT');
-        if (currentBusinessId && !isTyping) {
-            loadBusinessDetails(currentBusinessId);
-        }
+        const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT');
+        if (currentBusinessId && !isTyping) loadBusinessDetails(currentBusinessId);
     }, 10000);
 </script>
-
 </body>
 </html>

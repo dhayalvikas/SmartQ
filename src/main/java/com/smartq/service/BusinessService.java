@@ -11,6 +11,7 @@ import com.smartq.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,6 +26,8 @@ public class BusinessService {
     private final UserRepository userRepository;
     private final QueueSessionRepository queueSessionRepository;
     private final QrCodeService qrCodeService;
+    @Value("${app.base.url:http://localhost:8080}")
+    private String baseUrl;
 
     // Get current logged in user
     private User getCurrentUser() {
@@ -63,7 +66,7 @@ public class BusinessService {
 
         businessRepository.save(business);
         // Generate QR code for this business
-        String qrContent = "http://localhost:8080/join/"
+        String qrContent = baseUrl + "/join.html?businessId="
                 + business.getId();
         String qrBase64 = qrCodeService
                 .generateQrCodeBase64(qrContent);
