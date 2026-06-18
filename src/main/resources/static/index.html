@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartQ — Queue smarter, wait less</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --blue: #3b82f6;
+            --blue-dark: #2563eb;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --green: #34d399;
+            --yellow: #f59e0b;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+        }
+
+        /* NAV */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo { font-size: 1.5rem; font-weight: bold; color: var(--blue); }
+        .nav-logo span { color: var(--text); }
+
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+        .nav-links a:hover { color: var(--text); }
+
+        .nav-cta {
+            background: var(--blue);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .nav-cta:hover { background: var(--blue-dark); }
+
+        /* HERO */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 100px 20px 60px;
+            background: radial-gradient(ellipse at top, #1e3a5f 0%, var(--bg) 70%);
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: #1e3a5f;
+            color: var(--blue);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 24px;
+            border: 1px solid #2563eb;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            max-width: 800px;
+        }
+
+        .hero h1 span { color: var(--blue); }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--muted);
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+
+        .hero-btns { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+        .btn-primary-lg {
+            background: var(--blue);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn-primary-lg:hover { background: var(--blue-dark); }
+
+        .btn-secondary-lg {
+            background: transparent;
+            color: var(--text);
+            padding: 14px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+        }
+        .btn-secondary-lg:hover { border-color: var(--blue); color: var(--blue); }
+
+        .hero-stats {
+            display: flex;
+            gap: 40px;
+            margin-top: 60px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hero-stat { text-align: center; }
+        .hero-stat .num { font-size: 2rem; font-weight: bold; color: var(--blue); }
+        .hero-stat .label { color: var(--muted); font-size: 0.85rem; }
+
+        /* HOW IT WORKS */
+        section { padding: 80px 20px; }
+
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .section-sub {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 60px;
+            font-size: 1rem;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .step-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            text-align: center;
+            position: relative;
+        }
+
+        .step-num {
+            width: 48px;
+            height: 48px;
+            background: #1e3a5f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--blue);
+            margin: 0 auto 16px;
+            border: 2px solid var(--blue);
+        }
+
+        .step-icon { font-size: 2rem; margin-bottom: 12px; }
+        .step-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
+        .step-card p { color: var(--muted); font-size: 0.9rem; }
+
+        /* BUSINESS TYPES */
+        .biz-section { background: var(--card); }
+
+        .biz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .biz-card {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: border-color 0.2s;
+            cursor: default;
+        }
+
+        .biz-card:hover { border-color: var(--blue); }
+        .biz-card .icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .biz-card .name { font-weight: bold; font-size: 0.95rem; }
+        .biz-card .desc { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+        /* FEATURES */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .feature-icon { font-size: 1.8rem; margin-bottom: 12px; }
+        .feature-card h3 { font-size: 1rem; font-weight: bold; margin-bottom: 8px; }
+        .feature-card p { color: var(--muted); font-size: 0.9rem; }
+
+        /* DEMO */
+        .demo-section {
+            background: radial-gradient(ellipse at center, #1e3a5f 0%, var(--bg) 70%);
+            text-align: center;
+        }
+
+        .demo-links {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .demo-link {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 28px;
+            text-decoration: none;
+            color: var(--text);
+            transition: border-color 0.2s;
+            min-width: 200px;
+        }
+
+        .demo-link:hover { border-color: var(--blue); }
+        .demo-link .demo-icon { font-size: 2rem; margin-bottom: 8px; }
+        .demo-link .demo-title { font-weight: bold; font-size: 0.95rem; }
+        .demo-link .demo-desc { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+        /* TECH STACK */
+        .tech-section { background: var(--card); }
+
+        .tech-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .tech-badge {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            background: linear-gradient(135deg, #1e3a5f, var(--bg));
+            padding: 100px 20px;
+        }
+
+        .cta-section h2 { font-size: 2.5rem; margin-bottom: 16px; }
+        .cta-section p { color: var(--muted); font-size: 1.1rem; margin-bottom: 40px; }
+
+        /* FOOTER */
+        footer {
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-logo { font-size: 1.2rem; font-weight: bold; color: var(--blue); }
+        .footer-links { display: flex; gap: 20px; }
+        .footer-links a { color: var(--muted); text-decoration: none; font-size: 0.85rem; }
+        .footer-links a:hover { color: var(--text); }
+        .footer-copy { color: var(--muted); font-size: 0.8rem; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.2rem; }
+            nav { padding: 16px 20px; }
+            .nav-links { display: none; }
+            footer { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <div class="nav-logo">Smart<span>Q</span></div>
+    <div class="nav-links">
+        <a href="#how-it-works">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#demo">Live Demo</a>
+        <a href="/owner-dashboard.html" class="nav-cta">Register Business</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-badge">🚀 No app download required</div>
+    <h1>Queue Management<br>for <span>Every Business</span></h1>
+    <p>Customers scan a QR code to join your queue from their phone. No app, no hardware, no waiting in line. Just SmartQ.</p>
+    <div class="hero-btns">
+        <a href="/owner-dashboard.html" class="btn-primary-lg">Register Your Business →</a>
+        <a href="#demo" class="btn-secondary-lg">View Live Demo</a>
+    </div>
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <div class="num">0 ₹</div>
+            <div class="label">Setup cost</div>
+        </div>
+        <div class="hero-stat">
+            <div class="num">30s</div>
+            <div class="label">To get started</div>
+        </div>
+        <div class="hero-stat">
+            <div class="num">Any</div>
+            <div class="label">Phone works</div>
+        </div>
+        <div class="hero-stat">
+            <div class="num">Live</div>
+            <div class="label">Queue tracking</div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+    <div class="section-title">How SmartQ Works</div>
+    <div class="section-sub">Three simple steps — no hardware, no app, no hassle</div>
+    <div class="steps">
+        <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-icon">🏢</div>
+            <h3>Register Your Business</h3>
+            <p>Create your account, add your business details, and set up counters in under 2 minutes.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-icon">📱</div>
+            <h3>Print Your QR Code</h3>
+            <p>Download and print the generated QR code. Place it at your entrance or reception desk.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-icon">🎟️</div>
+            <h3>Customers Join Digitally</h3>
+            <p>Customers scan the QR with any phone, join the queue, and track their position live — no app needed.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-icon">🔔</div>
+            <h3>Smart Notifications</h3>
+            <p>Customers get email alerts when their turn is near. No more standing in line or losing their spot.</p>
+        </div>
+    </div>
+</section>
+
+<!-- BUSINESS TYPES -->
+<section class="biz-section">
+    <div class="section-title">Built for Every Business</div>
+    <div class="section-sub">SmartQ works for any business that manages customer queues</div>
+    <div class="biz-grid">
+        <div class="biz-card">
+            <div class="icon">🍽️</div>
+            <div class="name">Restaurant</div>
+            <div class="desc">Dine-in & takeaway queues</div>
+        </div>
+        <div class="biz-card">
+            <div class="icon">🏥</div>
+            <div class="name">Hospital</div>
+            <div class="desc">OPD, pharmacy & lab</div>
+        </div>
+        <div class="biz-card">
+            <div class="icon">🏦</div>
+            <div class="name">Bank</div>
+            <div class="desc">Accounts, loans & more</div>
+        </div>
+        <div class="biz-card">
+            <div class="icon">✂️</div>
+            <div class="name">Salon</div>
+            <div class="desc">Cuts, spa & styling</div>
+        </div>
+        <div class="biz-card">
+            <div class="icon">🏛️</div>
+            <div class="name">Government</div>
+            <div class="desc">Offices & service centers</div>
+        </div>
+        <div class="biz-card">
+            <div class="icon">🏢</div>
+            <div class="name">Any Business</div>
+            <div class="desc">If you have a queue, SmartQ works</div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+    <div class="section-title">Everything You Need</div>
+    <div class="section-sub">Powerful features built for real businesses</div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Live Analytics Dashboard</h3>
+            <p>Track served customers, wait times, peak hours, and revenue estimates in real time.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📺</div>
+            <h3>TV Display Screen</h3>
+            <p>Show live token numbers on a TV screen at your counter. Auto-refreshes every 5 seconds.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📧</div>
+            <h3>Email Notifications</h3>
+            <p>Customers get automatic email alerts when their turn is 3 positions away.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⭐</div>
+            <h3>Customer Feedback</h3>
+            <p>Collect ratings after each visit. Track your average rating and improve service quality.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔢</div>
+            <h3>Multi-Counter Support</h3>
+            <p>Run multiple service counters simultaneously. Each counter has its own independent queue.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3>Secure & Reliable</h3>
+            <p>JWT authentication, role-based access control, and deployed on cloud infrastructure.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h3>No App Download</h3>
+            <p>Works on any smartphone browser. Customers just scan and join — zero friction.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🏢</div>
+            <h3>Multi-Business Support</h3>
+            <p>Manage multiple business locations from one owner account.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⏱️</div>
+            <h3>Smart Wait Time</h3>
+            <p>Intelligent wait time calculation based on party size, service time, and queue position.</p>
+        </div>
+    </div>
+</section>
+
+<!-- LIVE DEMO -->
+<section id="demo" class="demo-section">
+    <div class="section-title">Try the Live Demo</div>
+    <div class="section-sub">All pages are live — explore SmartQ right now</div>
+    <div class="demo-links">
+        <a href="/owner-dashboard.html" class="demo-link">
+            <div class="demo-icon">🏢</div>
+            <div class="demo-title">Owner Dashboard</div>
+            <div class="demo-desc">Manage business, counters & analytics</div>
+        </a>
+        <a href="/join.html?businessId=1" class="demo-link">
+            <div class="demo-icon">📱</div>
+            <div class="demo-title">Customer Join Page</div>
+            <div class="demo-desc">Scan QR → join queue on phone</div>
+        </a>
+        <a href="/tv-display.html?businessId=1" class="demo-link">
+            <div class="demo-icon">📺</div>
+            <div class="demo-title">TV Display</div>
+            <div class="demo-desc">Live token display for counters</div>
+        </a>
+        <a href="/admin.html" class="demo-link">
+            <div class="demo-icon">🛡️</div>
+            <div class="demo-title">Admin Panel</div>
+            <div class="demo-desc">Platform-wide statistics</div>
+        </a>
+    </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="tech-section">
+    <div class="section-title">Built With Modern Tech</div>
+    <div class="section-sub">Production-grade stack for reliability and performance</div>
+    <div class="tech-grid">
+        <div class="tech-badge">☕ Java 21</div>
+        <div class="tech-badge">🍃 Spring Boot 3.5</div>
+        <div class="tech-badge">🔐 Spring Security + JWT</div>
+        <div class="tech-badge">🗄️ MySQL 8.0</div>
+        <div class="tech-badge">🔄 JPA / Hibernate</div>
+        <div class="tech-badge">🐳 Docker</div>
+        <div class="tech-badge">☁️ Railway</div>
+        <div class="tech-badge">📧 Mailgun API</div>
+        <div class="tech-badge">📦 Maven</div>
+        <div class="tech-badge">🔑 BCrypt</div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <h2>Ready to Eliminate Queues?</h2>
+    <p>Join SmartQ today — free to get started, no credit card required.</p>
+    <div class="hero-btns">
+        <a href="/owner-dashboard.html" class="btn-primary-lg">Register Your Business →</a>
+        <a href="https://github.com/dhayalvikas/SmartQ" target="_blank" class="btn-secondary-lg">View on GitHub</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-logo">SmartQ</div>
+    <div class="footer-links">
+        <a href="/owner-dashboard.html">Owner Dashboard</a>
+        <a href="/admin.html">Admin</a>
+        <a href="https://github.com/dhayalvikas/SmartQ" target="_blank">GitHub</a>
+    </div>
+    <div class="footer-copy">© 2026 SmartQ — Queue smarter, wait less</div>
+</footer>
+
+</body>
+</html>

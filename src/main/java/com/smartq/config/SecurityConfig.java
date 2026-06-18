@@ -32,9 +32,9 @@ public class SecurityConfig {
             throws Exception {
         http
                 .securityMatcher(
-                        "/join.html", "/token-status.html",
+                        "/", "/index.html", "/join.html", "/token-status.html",
                         "/tv-display.html", "/owner-dashboard.html",
-                        "/feedback.html", "/analytics.html", "/admin.html",
+                        "/feedback.html", "/admin.html",
                         "/*.css", "/*.js", "/*.png", "/*.ico"
                 )
                 .authorizeHttpRequests(auth -> auth
