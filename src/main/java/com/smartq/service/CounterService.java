@@ -118,4 +118,14 @@ public class CounterService {
                 .businessName(counter.getBusiness().getName())
                 .build();
     }
+    public void deleteCounter(Long counterId) {
+        User owner = getCurrentUser();
+        Counter counter = counterRepository.findById(counterId)
+                .orElseThrow(() -> new RuntimeException("Counter not found"));
+        // Make sure owner owns this counter's business
+        if (!counter.getBusiness().getOwner().getId().equals(owner.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+        counterRepository.delete(counter);
+    }
 }

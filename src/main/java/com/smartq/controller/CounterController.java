@@ -6,9 +6,11 @@ import com.smartq.service.CounterService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/counter")
@@ -50,5 +52,12 @@ public class CounterController {
             @PathVariable Long counterId) {
         return ResponseEntity.ok(
                 counterService.deactivateCounter(counterId));
+    }
+
+    @DeleteMapping("/delete/{counterId}")
+    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    public ResponseEntity<?> deleteCounter(@PathVariable Long counterId) {
+        counterService.deleteCounter(counterId);
+        return ResponseEntity.ok(Map.of("message", "Counter deleted"));
     }
 }

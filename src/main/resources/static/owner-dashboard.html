@@ -512,6 +512,7 @@
                                 ${c.isActive
                                     ? `<button class="btn btn-secondary" onclick="toggleCounter(${c.id}, false)">Deactivate</button>`
                                     : `<button class="btn btn-success" onclick="toggleCounter(${c.id}, true)">Activate</button>`}
+                                <button class="btn btn-danger" onclick="deleteCounter(${c.id})">Delete</button>
                             </div>
                         </div>`).join('') : '<div class="empty-state">No counters yet — add one below</div>'}
                 </div>
@@ -584,6 +585,16 @@
             body: JSON.stringify({ businessId, counterName, counterType, staffName })
         });
         loadBusinessDetails(businessId);
+    }
+
+    async function deleteCounter(counterId) {
+        if (!confirm('Delete this counter? This cannot be undone.')) return;
+        const res = await fetch(`${API}/api/counter/delete/${counterId}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
+        if (res.ok) loadBusinessDetails(currentBusinessId);
+        else alert('Failed to delete counter');
     }
 
     setInterval(() => {
