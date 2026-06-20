@@ -29,10 +29,38 @@
             width: 100%; padding: 12px; background: #3b82f6;
             border: none; border-radius: 8px; color: white;
             font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 8px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .auth-card button:hover { background: #2563eb; }
+        .auth-card button:disabled { opacity: 0.6; cursor: not-allowed; }
         .error-msg { color: #fca5a5; font-size: 0.85rem; margin-top: 8px; }
         .success-msg { color: #34d399; font-size: 0.85rem; margin-top: 8px; }
+
+        /* Spinner */
+        .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: none;
+        }
+        .spinner.show { display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Toast */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            background: #1e293b; border: 1px solid #334155; border-left: 4px solid #3b82f6;
+            border-radius: 8px; padding: 14px 18px; min-width: 260px; max-width: 360px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+            font-size: 0.9rem;
+        }
+        .toast.success { border-left-color: #34d399; }
+        .toast.error { border-left-color: #ef4444; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateX(20px); } }
 
         /* Dashboard */
         .main { padding: 30px 40px; display: none; }
@@ -55,7 +83,8 @@
         .modal input:focus, .modal select:focus { outline: none; border-color: #3b82f6; }
         .modal-footer { display: flex; gap: 10px; margin-top: 8px; }
         .modal-footer button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-confirm { background: #3b82f6; color: white; }
+        .btn-confirm { background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-cancel { background: #334155; color: #94a3b8; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -67,19 +96,20 @@
 
         /* Grid and cards */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+        .stat-card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
         .stat-label { color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
         .stat-value { font-size: 2rem; font-weight: bold; color: #3b82f6; }
         .section { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; }
-        .section h3 { margin-bottom: 16px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .section h3 { margin-bottom: 16px; color: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 
         /* Counters */
-        .counter-row { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #0f172a; border-radius: 8px; margin-bottom: 10px; border: 1px solid #334155; }
+        .counter-row { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #0f172a; border-radius: 8px; margin-bottom: 10px; border: 1px solid #334155; flex-wrap: wrap; gap: 10px; }
         .counter-row.inactive { opacity: 0.5; }
-        .counter-info { flex: 1; }
+        .counter-info { flex: 1; min-width: 200px; }
         .counter-name { font-weight: bold; margin-bottom: 4px; }
         .counter-meta { color: #94a3b8; font-size: 0.85rem; }
-        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 8px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-left: 8px; display: inline-flex; align-items: center; gap: 6px; }
         .btn-primary { background: #3b82f6; color: white; }
         .btn-success { background: #16a34a; color: white; }
         .btn-danger { background: #dc2626; color: white; }
@@ -104,7 +134,7 @@
 
         /* Feedback */
         .feedback-item { padding: 12px; background: #0f172a; border-radius: 8px; margin-bottom: 8px; border: 1px solid #334155; }
-        .feedback-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .feedback-header { display: flex; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 6px; }
         .stars { color: #f59e0b; }
         .feedback-comment { color: #94a3b8; font-size: 0.9rem; }
         .empty-state { text-align: center; color: #64748b; padding: 30px; }
@@ -113,12 +143,16 @@
         @media (max-width: 600px) {
             .header { padding: 16px 20px; }
             .main { padding: 20px; }
-            .counter-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .counter-row { flex-direction: column; align-items: flex-start; }
             .form-row { grid-template-columns: 1fr; }
+            .toast-container { left: 10px; right: 10px; }
+            .toast { max-width: none; }
         }
     </style>
 </head>
 <body>
+
+<div class="toast-container" id="toastContainer"></div>
 
 <!-- AUTH SCREEN -->
 <div class="auth-screen" id="authScreen">
@@ -131,21 +165,25 @@
             <div class="auth-tab" id="registerTab" onclick="switchAuthTab('register')">Register</div>
         </div>
 
-        <!-- Login Form -->
         <div id="loginForm">
             <input type="email" id="loginEmail" placeholder="Email">
             <input type="password" id="loginPassword" placeholder="Password">
-            <button onclick="login()">Login →</button>
+            <button id="loginBtn" onclick="login()">
+                <span id="loginBtnText">Login →</span>
+                <span class="spinner" id="loginSpinner"></span>
+            </button>
             <div class="error-msg" id="loginError"></div>
         </div>
 
-        <!-- Register Form -->
         <div id="registerForm" style="display:none">
             <input type="text" id="regName" placeholder="Your Full Name">
             <input type="email" id="regEmail" placeholder="Email">
             <input type="password" id="regPassword" placeholder="Password (min 6 chars)">
             <input type="tel" id="regPhone" placeholder="Phone (optional)">
-            <button onclick="registerOwner()">Create Account →</button>
+            <button id="registerBtn" onclick="registerOwner()">
+                <span id="registerBtnText">Create Account →</span>
+                <span class="spinner" id="registerSpinner"></span>
+            </button>
             <div class="error-msg" id="registerError"></div>
             <div class="success-msg" id="registerSuccess"></div>
         </div>
@@ -157,7 +195,7 @@
     <div class="modal">
         <h3>🏢 Create New Business</h3>
         <input type="text" id="bizName" placeholder="Business Name *">
-        <select id="bizType">
+        <select id="bizType" onchange="updateCounterTypePreview()">
             <option value="">Select Business Type *</option>
             <option value="RESTAURANT">🍽️ Restaurant</option>
             <option value="HOSPITAL">🏥 Hospital</option>
@@ -178,7 +216,10 @@
         <div class="error-msg" id="createBizError"></div>
         <div class="modal-footer">
             <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-            <button class="btn-confirm" onclick="createBusiness()">Create Business</button>
+            <button class="btn-confirm" id="createBizBtn" onclick="createBusiness()">
+                <span id="createBizBtnText">Create Business</span>
+                <span class="spinner" id="createBizSpinner"></span>
+            </button>
         </div>
     </div>
 </div>
@@ -207,7 +248,60 @@
     let businesses = [];
     let currentBusinessId = null;
 
+    // Counter types filtered by business type
+    const counterTypesByBusiness = {
+        RESTAURANT: [
+            { value: 'DINE_IN', label: 'Dine In' },
+            { value: 'TAKEAWAY', label: 'Takeaway' },
+            { value: 'BILLING', label: 'Billing' }
+        ],
+        HOSPITAL: [
+            { value: 'OPD', label: 'OPD' },
+            { value: 'DOCTOR', label: 'Doctor Consultation' },
+            { value: 'PHARMACY', label: 'Pharmacy' },
+            { value: 'LAB', label: 'Lab Tests' }
+        ],
+        BANK: [
+            { value: 'GENERAL', label: 'General Banking' },
+            { value: 'ACCOUNT', label: 'Account Services' },
+            { value: 'LOAN', label: 'Loan Desk' }
+        ],
+        SALON: [
+            { value: 'CUTS', label: 'Hair Cuts' },
+            { value: 'SPA', label: 'Spa Services' }
+        ],
+        GOVERNMENT: [
+            { value: 'GENERAL', label: 'General Services' },
+            { value: 'BILLING', label: 'Billing Desk' }
+        ],
+        OTHER: [
+            { value: 'GENERAL', label: 'General' },
+            { value: 'BILLING', label: 'Billing' }
+        ]
+    };
+
     if (authToken) showDashboard();
+
+    // ── Toast Notifications ──
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+        toast.textContent = `${icon} ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ── Button Loading State ──
+    function setLoading(btnId, spinnerId, textId, loading, loadingText) {
+        const btn = document.getElementById(btnId);
+        const spinner = document.getElementById(spinnerId);
+        const text = document.getElementById(textId);
+        btn.disabled = loading;
+        spinner.classList.toggle('show', loading);
+        if (loading && loadingText) text.textContent = loadingText;
+    }
 
     // ── Auth Tab Switch ──
     function switchAuthTab(tab) {
@@ -221,8 +315,10 @@
     async function login() {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
+        document.getElementById('loginError').textContent = '';
         if (!email || !password) { document.getElementById('loginError').textContent = 'Please fill all fields'; return; }
 
+        setLoading('loginBtn', 'loginSpinner', 'loginBtnText', true, 'Logging in...');
         try {
             const res = await fetch(`${API}/api/auth/login`, {
                 method: 'POST',
@@ -233,6 +329,8 @@
             const data = await res.json();
             if (data.role !== 'OWNER' && data.role !== 'ADMIN') {
                 document.getElementById('loginError').textContent = 'Only business owners can access this dashboard';
+                setLoading('loginBtn', 'loginSpinner', 'loginBtnText', false);
+                document.getElementById('loginBtnText').textContent = 'Login →';
                 return;
             }
             authToken = data.token;
@@ -241,6 +339,8 @@
             showDashboard();
         } catch (err) {
             document.getElementById('loginError').textContent = 'Invalid email or password';
+            setLoading('loginBtn', 'loginSpinner', 'loginBtnText', false);
+            document.getElementById('loginBtnText').textContent = 'Login →';
         }
     }
 
@@ -250,6 +350,7 @@
         const email = document.getElementById('regEmail').value;
         const password = document.getElementById('regPassword').value;
         const phone = document.getElementById('regPhone').value;
+        document.getElementById('registerError').textContent = '';
 
         if (!name || !email || !password) {
             document.getElementById('registerError').textContent = 'Please fill all required fields';
@@ -260,6 +361,7 @@
             return;
         }
 
+        setLoading('registerBtn', 'registerSpinner', 'registerBtnText', true, 'Creating account...');
         try {
             const res = await fetch(`${API}/api/auth/register`, {
                 method: 'POST',
@@ -273,9 +375,11 @@
             localStorage.setItem('smartq_owner_token', authToken);
             localStorage.setItem('smartq_owner_name', data.name);
             document.getElementById('registerSuccess').textContent = 'Account created! Loading dashboard...';
-            setTimeout(() => showDashboard(), 1000);
+            setTimeout(() => showDashboard(), 800);
         } catch (err) {
             document.getElementById('registerError').textContent = err.message;
+            setLoading('registerBtn', 'registerSpinner', 'registerBtnText', false);
+            document.getElementById('registerBtnText').textContent = 'Create Account →';
         }
     }
 
@@ -306,6 +410,10 @@
         document.getElementById('createBizError').textContent = '';
     }
 
+    function updateCounterTypePreview() {
+        // Reserved for future live preview if needed
+    }
+
     // ── Create Business ──
     async function createBusiness() {
         const name = document.getElementById('bizName').value;
@@ -315,12 +423,14 @@
         const maxQueueSize = parseInt(document.getElementById('bizMaxQueue').value) || 50;
         const avgServiceMins = parseInt(document.getElementById('bizAvgService').value) || 10;
         const calledMessage = document.getElementById('bizCalledMessage').value;
+        document.getElementById('createBizError').textContent = '';
 
         if (!name || !businessType || !address || !city) {
             document.getElementById('createBizError').textContent = 'Please fill all required fields';
             return;
         }
 
+        setLoading('createBizBtn', 'createBizSpinner', 'createBizBtnText', true, 'Creating...');
         try {
             const res = await fetch(`${API}/api/business/create`, {
                 method: 'POST',
@@ -331,19 +441,22 @@
             if (!res.ok) throw new Error(data.error || 'Failed to create business');
 
             closeModal();
-            // Clear form
             ['bizName', 'bizAddress', 'bizCity'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('bizType').value = '';
 
+            showToast(`"${name}" created successfully!`, 'success');
             await loadBusinesses();
 
-            // Switch to new business and show QR
             if (data.id) {
                 currentBusinessId = data.id;
                 showQrCode(data);
             }
         } catch (err) {
             document.getElementById('createBizError').textContent = err.message;
+            showToast(err.message, 'error');
+        } finally {
+            setLoading('createBizBtn', 'createBizSpinner', 'createBizBtnText', false);
+            document.getElementById('createBizBtnText').textContent = 'Create Business';
         }
     }
 
@@ -412,6 +525,12 @@
         loadBusinessDetails(id);
     }
 
+    // ── Get counter type options HTML for a business type ──
+    function getCounterTypeOptions(businessType) {
+        const types = counterTypesByBusiness[businessType] || counterTypesByBusiness.OTHER;
+        return types.map(t => `<option value="${t.value}">${t.label}</option>`).join('');
+    }
+
     // ── Load Business Details ──
     async function loadBusinessDetails(businessId) {
         const business = businesses.find(b => b.id === businessId);
@@ -427,7 +546,6 @@
         const analytics = await analyticsRes.json();
         const feedback = await feedbackRes.json();
 
-        // Chart
         const days = analytics.last7Days || [];
         const maxVal = Math.max(...days.map(d => d.totalServed || 0), 1);
         const chartBars = days.length > 0 ? days.map(day => {
@@ -449,8 +567,8 @@
                             ${business.isQueueOpen ? '🟢 Queue Open' : '🔴 Queue Closed'}
                         </span>
                         ${business.isQueueOpen
-                            ? `<button class="btn btn-danger" onclick="toggleQueue(${businessId}, false)">Close Queue</button>`
-                            : `<button class="btn btn-success" onclick="toggleQueue(${businessId}, true)">Open Queue</button>`}
+                            ? `<button class="btn btn-danger" id="queueBtn" onclick="toggleQueue(${businessId}, false, this)">Close Queue</button>`
+                            : `<button class="btn btn-success" id="queueBtn" onclick="toggleQueue(${businessId}, true, this)">Open Queue</button>`}
                     </span>
                 </h3>
                 <div class="counter-meta">
@@ -465,7 +583,7 @@
                 ${business.qrCodeUrl ? `
                 <div style="margin-top:16px;">
                     <img src="${business.qrCodeUrl}" style="width:120px;height:120px;border-radius:8px;" alt="QR">
-                </div>` : ''}
+                </div>` : '<div style="margin-top:12px;color:#64748b;font-size:0.85rem;">No QR code yet — recreate this business to generate one</div>'}
             </div>
 
             <div class="grid">
@@ -508,32 +626,21 @@
                                 <div class="counter-meta">Now Serving: #${c.currentToken || '--'} • Served Today: ${c.tokensServedToday || 0} • Staff: ${c.staffName || 'N/A'}</div>
                             </div>
                             <div>
-                                <button class="btn btn-primary" onclick="callNext(${c.id})" ${!c.isActive || !business.isQueueOpen ? 'disabled' : ''}>Call Next</button>
+                                <button class="btn btn-primary" onclick="callNext(${c.id}, this)" ${!c.isActive || !business.isQueueOpen ? 'disabled' : ''}>Call Next</button>
                                 ${c.isActive
                                     ? `<button class="btn btn-secondary" onclick="toggleCounter(${c.id}, false)">Deactivate</button>`
                                     : `<button class="btn btn-success" onclick="toggleCounter(${c.id}, true)">Activate</button>`}
-                                <button class="btn btn-danger" onclick="deleteCounter(${c.id})">Delete</button>
+                                <button class="btn btn-danger" onclick="deleteCounter(${c.id}, '${c.counterName.replace(/'/g, "\\'")}')">Delete</button>
                             </div>
                         </div>`).join('') : '<div class="empty-state">No counters yet — add one below</div>'}
                 </div>
                 <div class="new-counter-form">
                     <input type="text" id="newCounterName" placeholder="Counter name">
                     <select id="newCounterType">
-                        <option value="DINE_IN">DINE_IN</option>
-                        <option value="TAKEAWAY">TAKEAWAY</option>
-                        <option value="BILLING">BILLING</option>
-                        <option value="OPD">OPD</option>
-                        <option value="DOCTOR">DOCTOR</option>
-                        <option value="PHARMACY">PHARMACY</option>
-                        <option value="LAB">LAB</option>
-                        <option value="GENERAL">GENERAL</option>
-                        <option value="ACCOUNT">ACCOUNT</option>
-                        <option value="LOAN">LOAN</option>
-                        <option value="CUTS">CUTS</option>
-                        <option value="SPA">SPA</option>
+                        ${getCounterTypeOptions(business.businessType)}
                     </select>
                     <input type="text" id="newCounterStaff" placeholder="Staff name (optional)">
-                    <button class="btn btn-primary" onclick="addCounter(${businessId})">+ Add Counter</button>
+                    <button class="btn btn-primary" id="addCounterBtn" onclick="addCounter(${businessId})">+ Add Counter</button>
                 </div>
             </div>
 
@@ -556,45 +663,95 @@
         `;
     }
 
-    async function toggleQueue(businessId, open) {
+    async function toggleQueue(businessId, open, btnEl) {
+        if (btnEl) { btnEl.disabled = true; btnEl.textContent = open ? 'Opening...' : 'Closing...'; }
         const endpoint = open ? 'open' : 'close';
-        await fetch(`${API}/api/business/queue/${endpoint}/${businessId}`, { method: 'PUT', headers: authHeaders() });
+        try {
+            const res = await fetch(`${API}/api/business/queue/${endpoint}/${businessId}`, { method: 'PUT', headers: authHeaders() });
+            if (res.ok) showToast(open ? 'Queue opened!' : 'Queue closed', 'success');
+            else showToast('Action failed', 'error');
+        } catch (e) {
+            showToast('Network error', 'error');
+        }
         loadBusinesses();
     }
 
-    async function callNext(counterId) {
-        const res = await fetch(`${API}/api/token/next/${counterId}`, { method: 'PUT', headers: authHeaders() });
-        const data = await res.json();
-        if (!res.ok) alert(data.error || 'No customers waiting');
+    async function callNext(counterId, btnEl) {
+        if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Calling...'; }
+        try {
+            const res = await fetch(`${API}/api/token/next/${counterId}`, { method: 'PUT', headers: authHeaders() });
+            const data = await res.json();
+            if (!res.ok) {
+                showToast(data.error || 'No customers waiting', 'error');
+            } else {
+                showToast(`Token #${data.tokenNumber} called!`, 'success');
+            }
+        } catch (e) {
+            showToast('Network error', 'error');
+        }
         loadBusinessDetails(currentBusinessId);
     }
 
     async function toggleCounter(counterId, activate) {
         const endpoint = activate ? 'activate' : 'deactivate';
         await fetch(`${API}/api/counter/${endpoint}/${counterId}`, { method: 'PUT', headers: authHeaders() });
+        showToast(activate ? 'Counter activated' : 'Counter deactivated', 'success');
         loadBusinessDetails(currentBusinessId);
     }
 
-    async function addCounter(businessId) {
-        const counterName = document.getElementById('newCounterName').value;
-        const counterType = document.getElementById('newCounterType').value;
-        const staffName = document.getElementById('newCounterStaff').value;
-        if (!counterName) { alert('Counter name required'); return; }
-        await fetch(`${API}/api/counter/create`, {
-            method: 'POST', headers: authHeaders(),
-            body: JSON.stringify({ businessId, counterName, counterType, staffName })
-        });
-        loadBusinessDetails(businessId);
+    async function deleteCounter(counterId, counterName) {
+        if (!confirm(`Delete counter "${counterName}"? This cannot be undone.`)) return;
+        try {
+            const res = await fetch(`${API}/api/counter/delete/${counterId}`, { method: 'DELETE', headers: authHeaders() });
+            if (res.ok) {
+                showToast('Counter deleted', 'success');
+                loadBusinessDetails(currentBusinessId);
+            } else {
+                const data = await res.json().catch(() => ({}));
+                showToast(data.error || 'Failed to delete counter', 'error');
+            }
+        } catch (e) {
+            showToast('Network error', 'error');
+        }
     }
 
-    async function deleteCounter(counterId) {
-        if (!confirm('Delete this counter? This cannot be undone.')) return;
-        const res = await fetch(`${API}/api/counter/delete/${counterId}`, {
-            method: 'DELETE',
-            headers: authHeaders()
-        });
-        if (res.ok) loadBusinessDetails(currentBusinessId);
-        else alert('Failed to delete counter');
+    async function addCounter(businessId) {
+        const counterNameInput = document.getElementById('newCounterName');
+        const counterName = counterNameInput.value.trim();
+        const counterType = document.getElementById('newCounterType').value;
+        const staffName = document.getElementById('newCounterStaff').value;
+
+        if (!counterName) { showToast('Counter name required', 'error'); return; }
+
+        // Check for duplicate counter name within this business
+        const countersRes = await fetch(`${API}/api/counter/list/${businessId}`, { headers: authHeaders() });
+        const existingCounters = await countersRes.json();
+        const duplicate = existingCounters.some(c => c.counterName.toLowerCase() === counterName.toLowerCase());
+        if (duplicate) {
+            showToast(`A counter named "${counterName}" already exists`, 'error');
+            return;
+        }
+
+        const btn = document.getElementById('addCounterBtn');
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+
+        try {
+            const res = await fetch(`${API}/api/counter/create`, {
+                method: 'POST', headers: authHeaders(),
+                body: JSON.stringify({ businessId, counterName, counterType, staffName })
+            });
+            if (res.ok) {
+                showToast('Counter added!', 'success');
+                counterNameInput.value = '';
+            } else {
+                const data = await res.json().catch(() => ({}));
+                showToast(data.error || 'Failed to add counter', 'error');
+            }
+        } catch (e) {
+            showToast('Network error', 'error');
+        }
+        loadBusinessDetails(businessId);
     }
 
     setInterval(() => {

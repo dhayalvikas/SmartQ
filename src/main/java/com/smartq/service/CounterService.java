@@ -43,6 +43,16 @@ public class CounterService {
                         new RuntimeException(
                                 "Business not found or unauthorized"));
 
+        // Check for duplicate counter name in this business
+        boolean nameExists = counterRepository.findByBusinessId(request.getBusinessId())
+                .stream()
+                .anyMatch(c -> c.getCounterName().equalsIgnoreCase(request.getCounterName()));
+
+        if (nameExists) {
+            throw new RuntimeException(
+                    "A counter named '" + request.getCounterName() + "' already exists");
+        }
+
         Counter counter = Counter.builder()
                 .business(business)
                 .counterName(request.getCounterName())

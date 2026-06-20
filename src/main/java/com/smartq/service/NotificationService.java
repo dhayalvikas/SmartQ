@@ -1,5 +1,7 @@
 package com.smartq.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,6 +13,9 @@ import java.util.Base64;
 
 @Service
 public class NotificationService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(NotificationService.class);
 
     @Value("${mailgun.api.key}")
     private String apiKey;
@@ -92,14 +97,13 @@ public class NotificationService {
                     .retrieve()
                     .bodyToMono(String.class)
                     .doOnSuccess(response ->
-                            System.out.println("Email sent: " + response))
+                            log.info("Email sent successfully to {}", to))
                     .doOnError(error ->
-                            System.err.println("Email failed: "
-                                    + error.getMessage()))
+                            log.error("Email failed to {}: {}", to, error.getMessage()))
                     .subscribe();
 
         } catch (Exception e) {
-            System.err.println("Email error: " + e.getMessage());
+            log.error("Email error for {}: {}", to, e.getMessage());
         }
     }
 }
