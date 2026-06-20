@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartQ — Owner Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%8E%9F%EF%B8%8F</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0f172a; color: white; font-family: 'Arial', sans-serif; min-height: 100vh; }
+        body { background: #0f172a; color: white; font-family: 'Inter', -apple-system, sans-serif; min-height: 100vh; }
         .header { background: #1e293b; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #3b82f6; }
         .logo { font-size: 1.8rem; font-weight: bold; color: #3b82f6; }
         .logout-btn { background: #334155; color: #94a3b8; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
@@ -485,6 +488,22 @@
         link.click();
     }
 
+    async function regenerateQr(businessId) {
+        try {
+            const res = await fetch(`${API}/api/business/regenerate-qr/${businessId}`, {
+                method: 'PUT', headers: authHeaders()
+            });
+            if (res.ok) {
+                showToast('QR code generated!', 'success');
+                loadBusinessDetails(businessId);
+            } else {
+                showToast('Failed to generate QR', 'error');
+            }
+        } catch (e) {
+            showToast('Network error', 'error');
+        }
+    }
+
     // ── Load Businesses ──
     async function loadBusinesses() {
         const res = await fetch(`${API}/api/business/my`, { headers: authHeaders() });
@@ -583,7 +602,10 @@
                 ${business.qrCodeUrl ? `
                 <div style="margin-top:16px;">
                     <img src="${business.qrCodeUrl}" style="width:120px;height:120px;border-radius:8px;" alt="QR">
-                </div>` : '<div style="margin-top:12px;color:#64748b;font-size:0.85rem;">No QR code yet — recreate this business to generate one</div>'}
+                </div>` : `
+                <div style="margin-top:12px;">
+                    <button class="btn btn-primary" onclick="regenerateQr(${businessId})">🔄 Generate QR Code</button>
+                </div>`}
             </div>
 
             <div class="grid">

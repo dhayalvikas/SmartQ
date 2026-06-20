@@ -5,13 +5,12 @@ import com.smartq.dto.response.BusinessResponse;
 import com.smartq.service.BusinessService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.smartq.entity.Business;
 import com.smartq.repository.BusinessRepository;
 import com.smartq.service.QrCodeService;
-import org.springframework.http.ResponseEntity;
 import java.util.HashMap;
 import java.util.Map;
 import com.smartq.dto.response.AnalyticsResponse;
@@ -28,6 +27,9 @@ public class BusinessController {
     private final BusinessRepository businessRepository;
     private final QrCodeService qrCodeService;
     private final AnalyticsService analyticsService;
+
+    @Value("${app.base.url:http://localhost:8080}")
+    private String baseUrl;
 
     @PostMapping("/create")
     public ResponseEntity<BusinessResponse> createBusiness(
@@ -55,6 +57,7 @@ public class BusinessController {
         return ResponseEntity.ok(
                 businessService.closeQueue(businessId));
     }
+
     // Get QR code as Base64 (for showing in browser)
     @GetMapping("/qr/{businessId}")
     public ResponseEntity<Map<String, String>> getQrCode(
@@ -64,7 +67,7 @@ public class BusinessController {
                     Map<String, String> response = new HashMap<>();
                     response.put("qrCode", business.getQrCodeUrl());
                     response.put("businessName", business.getName());
-                    response.put("scanUrl", "http://localhost:8080/join/"
+                    response.put("scanUrl", baseUrl + "/join.html?businessId="
                             + businessId);
                     return ResponseEntity.ok(response);
                 })
@@ -81,7 +84,7 @@ public class BusinessController {
                 .orElseThrow(() ->
                         new RuntimeException("Business not found"));
 
-        String qrContent = "http://localhost:8080/join/"
+        String qrContent = baseUrl + "/join.html?businessId="
                 + businessId;
         byte[] qrBytes = qrCodeService
                 .generateQrCodeBytes(qrContent);
@@ -92,9 +95,8 @@ public class BusinessController {
                         "attachment; filename=smartq-" +
                                 businessId + ".png")
                 .body(qrBytes);
-
-
     }
+
     @GetMapping("/analytics/{businessId}")
     public ResponseEntity<AnalyticsResponse> getAnalytics(
             @PathVariable Long businessId) {
@@ -102,4 +104,8 @@ public class BusinessController {
                 analyticsService.getAnalytics(businessId));
     }
 
+    @PutMapping("/regenerate-qr/{businessId}")
+    public ResponseEntity<BusinessResponse> regenerateQr(@PathVariable Long businessId) {
+        return ResponseEntity.ok(businessService.regenerateQrCode(businessId));
+    }
 }

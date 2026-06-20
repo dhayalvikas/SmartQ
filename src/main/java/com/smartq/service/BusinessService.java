@@ -9,9 +9,9 @@ import com.smartq.repository.BusinessRepository;
 import com.smartq.repository.QueueSessionRepository;
 import com.smartq.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,6 +26,7 @@ public class BusinessService {
     private final UserRepository userRepository;
     private final QueueSessionRepository queueSessionRepository;
     private final QrCodeService qrCodeService;
+
     @Value("${app.base.url:http://localhost:8080}")
     private String baseUrl;
 
@@ -65,13 +66,15 @@ public class BusinessService {
                 .build();
 
         businessRepository.save(business);
-        // Generate QR code for this business
+
+        // Generate QR code for this business using production base URL
         String qrContent = baseUrl + "/join.html?businessId="
                 + business.getId();
         String qrBase64 = qrCodeService
                 .generateQrCodeBase64(qrContent);
         business.setQrCodeUrl(qrBase64);
         businessRepository.save(business);
+
         return mapToResponse(business);
     }
 
@@ -146,6 +149,23 @@ public class BusinessService {
                     session.setClosedAt(LocalDateTime.now());
                     queueSessionRepository.save(session);
                 });
+
+        return mapToResponse(business);
+    }
+
+    // Regenerate QR code (used for businesses created before URL fix,
+    // or seeded directly via SQL with no QR)
+    public BusinessResponse regenerateQrCode(Long businessId) {
+        User owner = getCurrentUser();
+        Business business = businessRepository
+                .findByIdAndOwnerId(businessId, owner.getId())
+                .orElseThrow(() ->
+                        new RuntimeException("Business not found"));
+
+        String qrContent = baseUrl + "/join.html?businessId=" + business.getId();
+        String qrBase64 = qrCodeService.generateQrCodeBase64(qrContent);
+        business.setQrCodeUrl(qrBase64);
+        businessRepository.save(business);
 
         return mapToResponse(business);
     }
