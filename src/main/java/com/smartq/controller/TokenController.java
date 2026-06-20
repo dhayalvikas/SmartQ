@@ -59,4 +59,12 @@ public class TokenController {
         return ResponseEntity.ok(
                 tokenService.callNextToken(counterId));
     }
+
+    // Owner marks a CALLED token as served (CALLED -> DONE)
+    @PutMapping("/serve/{tokenId}")
+    public ResponseEntity<TokenStatusResponse> markServed(
+            @PathVariable Long tokenId) {
+        return ResponseEntity.ok(
+                tokenService.markServed(tokenId));
+    }
 }

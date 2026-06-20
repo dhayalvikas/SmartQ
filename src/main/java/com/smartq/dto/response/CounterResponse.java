@@ -12,6 +12,7 @@ public class CounterResponse {
     private CounterType counterType;
     private Boolean isActive;
     private Integer currentToken;
+    private Long currentTokenId;
     private String staffName;
     private Integer tokensServedToday;
     private Long businessId;

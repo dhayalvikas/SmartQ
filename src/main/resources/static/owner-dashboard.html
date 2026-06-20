@@ -649,6 +649,7 @@
                             </div>
                             <div>
                                 <button class="btn btn-primary" onclick="callNext(${c.id}, this)" ${!c.isActive || !business.isQueueOpen ? 'disabled' : ''}>Call Next</button>
+                                ${c.currentTokenId ? `<button class="btn btn-success" onclick="markServed(${c.currentTokenId}, this)">✓ Mark Served</button>` : ''}
                                 ${c.isActive
                                     ? `<button class="btn btn-secondary" onclick="toggleCounter(${c.id}, false)">Deactivate</button>`
                                     : `<button class="btn btn-success" onclick="toggleCounter(${c.id}, true)">Activate</button>`}
@@ -707,6 +708,22 @@
                 showToast(data.error || 'No customers waiting', 'error');
             } else {
                 showToast(`Token #${data.tokenNumber} called!`, 'success');
+            }
+        } catch (e) {
+            showToast('Network error', 'error');
+        }
+        loadBusinessDetails(currentBusinessId);
+    }
+
+    async function markServed(tokenId, btnEl) {
+        if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Marking...'; }
+        try {
+            const res = await fetch(`${API}/api/token/serve/${tokenId}`, { method: 'PUT', headers: authHeaders() });
+            const data = await res.json();
+            if (!res.ok) {
+                showToast(data.error || 'Failed to mark as served', 'error');
+            } else {
+                showToast(`Token #${data.tokenNumber} marked as served!`, 'success');
             }
         } catch (e) {
             showToast('Network error', 'error');

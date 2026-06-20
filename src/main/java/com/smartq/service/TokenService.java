@@ -185,6 +185,8 @@ public class TokenService {
     }
 
     // ── CALL NEXT TOKEN (Owner) ──────────────────────────────
+    // Calls the next WAITING token. If a CALLED token exists that
+    // was never marked served, it is moved to NO_SHOW first.
     @Transactional
     public TokenStatusResponse callNextToken(Long counterId) {
         User owner = getCurrentUser();
@@ -200,7 +202,7 @@ public class TokenService {
             throw new RuntimeException("Unauthorized");
         }
 
-        // Mark current SERVING token as DONE
+        // Mark any SERVING token as DONE (legacy safety net)
         List<Token> servingTokens = tokenRepository
                 .findByCounterIdAndStatusOrderByTokenNumber(
                         counterId, TokenStatus.SERVING);
@@ -209,13 +211,12 @@ public class TokenService {
             t.setStatus(TokenStatus.DONE);
             t.setServedAt(LocalDateTime.now());
             tokenRepository.save(t);
-
-            // Update counter stats
             counter.setTokensServedToday(
                     counter.getTokensServedToday() + 1);
         });
 
-        // Also mark CALLED tokens as NO_SHOW if not arrived
+        // Mark CALLED tokens as NO_SHOW if owner skips ahead
+        // without marking them served first
         List<Token> calledTokens = tokenRepository
                 .findByCounterIdAndStatusOrderByTokenNumber(
                         counterId, TokenStatus.CALLED);
@@ -231,7 +232,6 @@ public class TokenService {
                         counterId, TokenStatus.WAITING);
 
         if (waitingTokens.isEmpty()) {
-            // Update counter current token
             counterRepository.save(counter);
             throw new RuntimeException(
                     "No more customers waiting");
@@ -253,6 +253,48 @@ public class TokenService {
         return buildStatusResponse(
                 nextToken,
                 nextToken.getBusiness(),
+                counter
+        );
+    }
+
+    // ── MARK TOKEN AS SERVED (Owner) ─────────────────────────
+    // Owner clicks this once the customer has been helped at the
+    // counter. Transitions CALLED -> DONE.
+    @Transactional
+    public TokenStatusResponse markServed(Long tokenId) {
+        User owner = getCurrentUser();
+
+        Token token = tokenRepository.findById(tokenId)
+                .orElseThrow(() ->
+                        new RuntimeException("Token not found"));
+
+        Counter counter = token.getCounter();
+
+        // Verify ownership
+        if (!counter.getBusiness().getOwner()
+                .getId().equals(owner.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        if (token.getStatus() != TokenStatus.CALLED) {
+            throw new RuntimeException(
+                    "Only a called token can be marked as served");
+        }
+
+        token.setStatus(TokenStatus.DONE);
+        token.setServedAt(LocalDateTime.now());
+        tokenRepository.save(token);
+
+        counter.setTokensServedToday(
+                counter.getTokensServedToday() + 1);
+        counterRepository.save(counter);
+
+        // Update session stats
+        updateSessionStats(counter.getBusiness().getId());
+
+        return buildStatusResponse(
+                token,
+                token.getBusiness(),
                 counter
         );
     }
