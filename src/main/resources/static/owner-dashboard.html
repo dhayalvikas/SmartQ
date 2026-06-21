@@ -125,6 +125,25 @@
         .new-counter-form { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
         .new-counter-form input, .new-counter-form select { padding: 8px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: white; }
 
+        .queue-list { margin: 0 0 14px 0; padding-left: 4px; }
+        .queue-loading { color: #64748b; font-size: 0.8rem; padding: 6px 0; }
+        .queue-empty { color: #64748b; font-size: 0.8rem; padding: 6px 0; }
+        .queue-token {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #0f172a; border: 1px solid #334155; border-left: 3px solid #64748b;
+            border-radius: 6px; padding: 10px 14px; margin-bottom: 6px; gap: 10px; flex-wrap: wrap;
+        }
+        .queue-token.called { border-left-color: #34d399; background: #0f1f1a; }
+        .queue-token-left { flex: 1; min-width: 180px; }
+        .queue-token-num { font-weight: bold; color: #3b82f6; }
+        .queue-token.called .queue-token-num { color: #34d399; }
+        .queue-token-name { font-size: 0.85rem; color: #e2e8f0; margin-left: 8px; }
+        .queue-token-meta { font-size: 0.78rem; color: #94a3b8; margin-top: 2px; }
+        .queue-token-badge {
+            font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 10px;
+            background: #064e3b; color: #34d399; text-transform: uppercase;
+        }
+
         /* Chart */
         .chart-container { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding-bottom: 24px; }
         .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
@@ -649,12 +668,14 @@
                             </div>
                             <div>
                                 <button class="btn btn-primary" onclick="callNext(${c.id}, this)" ${!c.isActive || !business.isQueueOpen ? 'disabled' : ''}>Call Next</button>
-                                ${c.currentTokenId ? `<button class="btn btn-success" onclick="markServed(${c.currentTokenId}, this)">✓ Mark Served</button>` : ''}
                                 ${c.isActive
                                     ? `<button class="btn btn-secondary" onclick="toggleCounter(${c.id}, false)">Deactivate</button>`
                                     : `<button class="btn btn-success" onclick="toggleCounter(${c.id}, true)">Activate</button>`}
                                 <button class="btn btn-danger" onclick="deleteCounter(${c.id}, '${c.counterName.replace(/'/g, "\\'")}')">Delete</button>
                             </div>
+                        </div>
+                        <div class="queue-list" id="queue-${c.id}">
+                            <div class="queue-loading">Loading queue...</div>
                         </div>`).join('') : '<div class="empty-state">No counters yet — add one below</div>'}
                 </div>
                 <div class="new-counter-form">
@@ -684,6 +705,46 @@
                         </div>`).join('')}
             </div>
         `;
+
+        // Load each counter's live queue (called + waiting tokens)
+        counters.forEach(c => loadCounterQueue(c.id));
+    }
+
+    // ── Load and render live queue for a single counter ──
+    async function loadCounterQueue(counterId) {
+        const container = document.getElementById(`queue-${counterId}`);
+        if (!container) return;
+
+        try {
+            const res = await fetch(`${API}/api/token/queue/${counterId}`, { headers: authHeaders() });
+            if (!res.ok) { container.innerHTML = ''; return; }
+            const tokens = await res.json();
+
+            if (tokens.length === 0) {
+                container.innerHTML = '<div class="queue-empty">No customers in queue</div>';
+                return;
+            }
+
+            container.innerHTML = tokens.map(t => `
+                <div class="queue-token ${t.status === 'CALLED' ? 'called' : ''}">
+                    <div class="queue-token-left">
+                        <span class="queue-token-num">#${t.tokenNumber}</span>
+                        <span class="queue-token-name">${t.customerName}</span>
+                        <div class="queue-token-meta">
+                            ${t.partySize ? `👥 Party of ${t.partySize}` : ''}
+                            ${t.specialRequest ? ` • 📝 ${t.specialRequest}` : ''}
+                            ${t.status === 'WAITING' ? ` • Position ${t.positionInQueue}` : ''}
+                        </div>
+                    </div>
+                    ${t.status === 'CALLED'
+                        ? `<span class="queue-token-badge">Called</span>
+                           <button class="btn btn-success" onclick="markServed(${t.tokenId}, this)">✓ Mark Served</button>`
+                        : ''}
+                </div>
+            `).join('');
+        } catch (e) {
+            container.innerHTML = '';
+        }
     }
 
     async function toggleQueue(businessId, open, btnEl) {

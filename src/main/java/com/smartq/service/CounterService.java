@@ -4,12 +4,9 @@ import com.smartq.dto.request.CounterRequest;
 import com.smartq.dto.response.CounterResponse;
 import com.smartq.entity.Business;
 import com.smartq.entity.Counter;
-import com.smartq.entity.Token;
 import com.smartq.entity.User;
-import com.smartq.enums.TokenStatus;
 import com.smartq.repository.BusinessRepository;
 import com.smartq.repository.CounterRepository;
-import com.smartq.repository.TokenRepository;
 import com.smartq.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +22,6 @@ public class CounterService {
     private final CounterRepository counterRepository;
     private final BusinessRepository businessRepository;
     private final UserRepository userRepository;
-    private final TokenRepository tokenRepository;
 
     // Get current logged in user
     private User getCurrentUser() {
@@ -132,23 +128,12 @@ public class CounterService {
 
     // Map entity to response
     public CounterResponse mapToResponse(Counter counter) {
-        // Find the currently CALLED token for this counter, if any,
-        // so the frontend can call /api/token/serve/{tokenId}
-        Long currentTokenId = tokenRepository
-                .findByCounterIdAndStatusOrderByTokenNumber(
-                        counter.getId(), TokenStatus.CALLED)
-                .stream()
-                .findFirst()
-                .map(Token::getId)
-                .orElse(null);
-
         return CounterResponse.builder()
                 .id(counter.getId())
                 .counterName(counter.getCounterName())
                 .counterType(counter.getCounterType())
                 .isActive(counter.getIsActive())
                 .currentToken(counter.getCurrentToken())
-                .currentTokenId(currentTokenId)
                 .staffName(counter.getStaffName())
                 .tokensServedToday(counter.getTokensServedToday())
                 .businessId(counter.getBusiness().getId())

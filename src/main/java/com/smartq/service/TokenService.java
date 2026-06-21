@@ -1,6 +1,7 @@
 package com.smartq.service;
 
 import com.smartq.dto.request.TokenRequest;
+import com.smartq.dto.response.QueueTokenResponse;
 import com.smartq.dto.response.TokenStatusResponse;
 import com.smartq.entity.*;
 import com.smartq.enums.TokenStatus;
@@ -11,8 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -182,6 +185,48 @@ public class TokenService {
         }
 
         return buildStatusResponse(token, business, counter);
+    }
+
+    // ── GET LIVE QUEUE FOR A COUNTER (Owner) ─────────────────
+    // Returns CALLED token first (if any) followed by all WAITING
+    // tokens in order, with customer name, party size, and special
+    // request so the owner can see exactly who is in line.
+    public List<QueueTokenResponse> getCounterQueue(Long counterId) {
+        User owner = getCurrentUser();
+
+        Counter counter = counterRepository.findById(counterId)
+                .orElseThrow(() ->
+                        new RuntimeException("Counter not found"));
+
+        if (!counter.getBusiness().getOwner()
+                .getId().equals(owner.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        List<Token> calledTokens = tokenRepository
+                .findByCounterIdAndStatusOrderByTokenNumber(
+                        counterId, TokenStatus.CALLED);
+
+        List<Token> waitingTokens = tokenRepository
+                .findByCounterIdAndStatusOrderByTokenNumber(
+                        counterId, TokenStatus.WAITING);
+
+        List<Token> combined = new ArrayList<>();
+        combined.addAll(calledTokens);
+        combined.addAll(waitingTokens);
+
+        return combined.stream()
+                .map(t -> QueueTokenResponse.builder()
+                        .tokenId(t.getId())
+                        .tokenNumber(t.getTokenNumber())
+                        .status(t.getStatus())
+                        .customerName(t.getCustomer().getName())
+                        .customerPhone(t.getCustomer().getPhone())
+                        .partySize(t.getPartySize())
+                        .specialRequest(t.getSpecialRequest())
+                        .positionInQueue(t.getPositionInQueue())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     // ── CALL NEXT TOKEN (Owner) ──────────────────────────────
