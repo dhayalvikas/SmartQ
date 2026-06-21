@@ -20,4 +20,8 @@ public class RegisterRequest {
     private String password;
 
     private String phone;
+
+    // Optional — "OWNER" or "CUSTOMER". Defaults to CUSTOMER if not
+    // provided or invalid. ADMIN can never be self-registered.
+    private String role;
 }

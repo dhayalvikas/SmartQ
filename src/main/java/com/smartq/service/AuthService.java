@@ -33,13 +33,22 @@ public class AuthService {
                     "Email already registered: " + request.getEmail());
         }
 
+        // Resolve role from request. Only OWNER and CUSTOMER may be
+        // self-registered — ADMIN can never be created through this
+        // endpoint regardless of what is sent.
+        Role resolvedRole = Role.CUSTOMER;
+        if (request.getRole() != null
+                && request.getRole().equalsIgnoreCase("OWNER")) {
+            resolvedRole = Role.OWNER;
+        }
+
         // Create new user
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
-                .role(Role.CUSTOMER) // default role is customer
+                .role(resolvedRole)
                 .totalVisits(0)
                 .preferredLang("en")
                 .build();
