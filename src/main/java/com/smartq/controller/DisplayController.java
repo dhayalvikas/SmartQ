@@ -23,7 +23,6 @@ public class DisplayController {
     private final TokenRepository tokenRepository;
 
     // TV Display API — public, no login needed
-    // Owner opens this URL on TV screen
     @GetMapping("/api/display/{businessId}")
     public ResponseEntity<DisplayResponse> getDisplay(
             @PathVariable Long businessId) {
@@ -33,20 +32,22 @@ public class DisplayController {
                 .orElseThrow(() ->
                         new RuntimeException("Business not found"));
 
+        // FIX #11: Only show active counters on TV display
+        // Deactivated counters should not appear on the screen
         List<Counter> counters = counterRepository
-                .findByBusinessId(businessId);
+                .findByBusinessIdAndIsActive(businessId, true);
 
         List<DisplayResponse.CounterDisplayInfo> counterInfos =
                 counters.stream().map(counter -> {
                     int waiting = tokenRepository
                             .countByCounterIdAndStatus(
-                                    counter.getId(), TokenStatus.WAITING);
+                                    counter.getId(),
+                                    TokenStatus.WAITING);
 
                     return DisplayResponse.CounterDisplayInfo.builder()
                             .counterId(counter.getId())
                             .counterName(counter.getCounterName())
-                            .counterType(counter.getCounterType()
-                                    .name())
+                            .counterType(counter.getCounterType().name())
                             .currentToken(counter.getCurrentToken())
                             .totalWaiting(waiting)
                             .isActive(counter.getIsActive())
@@ -66,7 +67,6 @@ public class DisplayController {
     }
 
     // Customer join page — public, no login needed
-    // This is what QR code opens on customer phone
     @GetMapping("/join/{businessId}")
     public ResponseEntity<DisplayResponse> joinPage(
             @PathVariable Long businessId) {

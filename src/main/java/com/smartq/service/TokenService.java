@@ -15,11 +15,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TokenService {
+
+    private static final Logger log = LoggerFactory.getLogger(TokenService.class);
 
     private final TokenRepository tokenRepository;
     private final BusinessRepository businessRepository;
@@ -77,12 +82,15 @@ public class TokenService {
                     "This counter is not active");
         }
 
-        // Check max queue size
-        int currentWaiting = tokenRepository
+        // FIX #6: Check max queue size including CALLED tokens
+        // (a called customer is still physically at the venue)
+        int currentActive = tokenRepository
                 .countByCounterIdAndStatus(
-                        counter.getId(), TokenStatus.WAITING);
+                        counter.getId(), TokenStatus.WAITING)
+                + tokenRepository.countByCounterIdAndStatus(
+                counter.getId(), TokenStatus.CALLED);
 
-        if (currentWaiting >= business.getMaxQueueSize()) {
+        if (currentActive >= business.getMaxQueueSize()) {
             throw new RuntimeException(
                     "Queue is full. Please try again later.");
         }
@@ -94,7 +102,8 @@ public class TokenService {
                 .orElse(1);
 
         // Calculate position in queue
-        int position = currentWaiting + 1;
+        int position = tokenRepository.countByCounterIdAndStatus(
+                counter.getId(), TokenStatus.WAITING) + 1;
 
         // Calculate estimated wait time using SmartQ formula
         int estimatedWait = calculateWaitTime(
@@ -119,9 +128,9 @@ public class TokenService {
 
         tokenRepository.save(token);
 
-        // Update customer total visits
-        customer.setTotalVisits(customer.getTotalVisits() + 1);
-        userRepository.save(customer);
+        // FIX #7: Do NOT increment totalVisits here.
+        // totalVisits is incremented in markServed() so only
+        // completed visits are counted, not abandoned ones.
 
         // Update max queue reached in session
         updateSessionMaxQueue(business.getId(), position);
@@ -166,7 +175,9 @@ public class TokenService {
                 tokenRepository.save(token);
             }
 
-            // Send notification if customer is 3 tokens away
+            // NOTE: Notification is now primarily triggered in
+            // callNextToken(). This is a fallback for customers
+            // actively viewing their status page.
             if (token.getPositionInQueue() <= 3
                     && token.getPositionInQueue() > 0
                     && !token.getNotificationSent()) {
@@ -188,9 +199,6 @@ public class TokenService {
     }
 
     // ── GET LIVE QUEUE FOR A COUNTER (Owner) ─────────────────
-    // Returns CALLED token first (if any) followed by all WAITING
-    // tokens in order, with customer name, party size, and special
-    // request so the owner can see exactly who is in line.
     public List<QueueTokenResponse> getCounterQueue(Long counterId) {
         User owner = getCurrentUser();
 
@@ -230,8 +238,6 @@ public class TokenService {
     }
 
     // ── CALL NEXT TOKEN (Owner) ──────────────────────────────
-    // Calls the next WAITING token. If a CALLED token exists that
-    // was never marked served, it is moved to NO_SHOW first.
     @Transactional
     public TokenStatusResponse callNextToken(Long counterId) {
         User owner = getCurrentUser();
@@ -260,15 +266,39 @@ public class TokenService {
                     counter.getTokensServedToday() + 1);
         });
 
-        // Mark CALLED tokens as NO_SHOW if owner skips ahead
-        // without marking them served first
+        // FIX #1: Mark previously CALLED token as DONE (served),
+        // not NO_SHOW. "Call Next" means previous customer was
+        // served. Owner must use "Skip" (future feature) for
+        // no-shows. This is how real restaurants/hospitals work.
         List<Token> calledTokens = tokenRepository
                 .findByCounterIdAndStatusOrderByTokenNumber(
                         counterId, TokenStatus.CALLED);
 
         calledTokens.forEach(t -> {
-            t.setStatus(TokenStatus.NO_SHOW);
+            t.setStatus(TokenStatus.DONE);
+            t.setServedAt(LocalDateTime.now());
             tokenRepository.save(t);
+            counter.setTokensServedToday(
+                    counter.getTokensServedToday() + 1);
+
+            // Increment totalVisits for served customer
+            User servedCustomer = t.getCustomer();
+            servedCustomer.setTotalVisits(
+                    servedCustomer.getTotalVisits() + 1);
+            userRepository.save(servedCustomer);
+
+            // Send feedback email to served customer
+            try {
+                notificationService.sendFeedbackEmail(
+                        servedCustomer.getEmail(),
+                        servedCustomer.getName(),
+                        t.getBusiness().getName(),
+                        t.getId()
+                );
+            } catch (Exception e) {
+                // Don't fail the whole operation if email fails
+                log.error("Feedback email failed for token {}: {}", t.getId(), e.getMessage());
+            }
         });
 
         // Get next WAITING token
@@ -278,6 +308,7 @@ public class TokenService {
 
         if (waitingTokens.isEmpty()) {
             counterRepository.save(counter);
+            updateSessionStats(counter.getBusiness().getId());
             throw new RuntimeException(
                     "No more customers waiting");
         }
@@ -292,6 +323,32 @@ public class TokenService {
         counter.setCurrentToken(nextToken.getTokenNumber());
         counterRepository.save(counter);
 
+        // FIX #2: Send email to next 3 customers in queue
+        // so they know their turn is coming even if they
+        // closed the browser.
+        List<Token> remaining = tokenRepository
+                .findByCounterIdAndStatusOrderByTokenNumber(
+                        counterId, TokenStatus.WAITING);
+
+        for (int i = 0; i < Math.min(3, remaining.size()); i++) {
+            Token t = remaining.get(i);
+            if (!t.getNotificationSent()) {
+                try {
+                    notificationService.sendTurnComingEmail(
+                            t.getCustomer().getEmail(),
+                            t.getCustomer().getName(),
+                            counter.getBusiness().getName(),
+                            t.getTokenNumber(),
+                            counter.getCounterName()
+                    );
+                    t.setNotificationSent(true);
+                    tokenRepository.save(t);
+                } catch (Exception e) {
+                    log.error("Notification email failed: {}", e.getMessage());
+                }
+            }
+        }
+
         // Update session stats
         updateSessionStats(counter.getBusiness().getId());
 
@@ -303,8 +360,9 @@ public class TokenService {
     }
 
     // ── MARK TOKEN AS SERVED (Owner) ─────────────────────────
-    // Owner clicks this once the customer has been helped at the
-    // counter. Transitions CALLED -> DONE.
+    // Owner explicitly marks a CALLED token as served.
+    // Used when owner wants manual control instead of
+    // relying on "Call Next" auto-marking.
     @Transactional
     public TokenStatusResponse markServed(Long tokenId) {
         User owner = getCurrentUser();
@@ -333,6 +391,23 @@ public class TokenService {
         counter.setTokensServedToday(
                 counter.getTokensServedToday() + 1);
         counterRepository.save(counter);
+
+        // FIX #7: Increment totalVisits on actual serve
+        User customer = token.getCustomer();
+        customer.setTotalVisits(customer.getTotalVisits() + 1);
+        userRepository.save(customer);
+
+        // FIX #3: Send feedback email after serving
+        try {
+            notificationService.sendFeedbackEmail(
+                    customer.getEmail(),
+                    customer.getName(),
+                    token.getBusiness().getName(),
+                    token.getId()
+            );
+        } catch (Exception e) {
+            log.error("Feedback email failed for token {}: {}", tokenId, e.getMessage());
+        }
 
         // Update session stats
         updateSessionStats(counter.getBusiness().getId());
@@ -389,7 +464,6 @@ public class TokenService {
     private int calculateWaitTime(int position,
                                   int avgServiceMins,
                                   int partySize) {
-        // Party size factor
         double partySizeFactor;
         if (partySize <= 1) {
             partySizeFactor = 1.0;
@@ -401,8 +475,6 @@ public class TokenService {
             partySizeFactor = 1.8;
         }
 
-        // SmartQ formula:
-        // position × avgServiceMins × partySizeFactor
         return (int) Math.ceil(
                 position * avgServiceMins * partySizeFactor);
     }
@@ -422,14 +494,54 @@ public class TokenService {
     }
 
     // ── UPDATE SESSION STATS ─────────────────────────────────
+    // FIX #4: Calculate ALL analytics fields, not just totalServed
     private void updateSessionStats(Long businessId) {
         queueSessionRepository.findByBusinessIdAndDate(
                         businessId, java.time.LocalDate.now())
                 .ifPresent(session -> {
-                    int totalServed = tokenRepository
-                            .countTodaysTokensByStatus(
-                                    businessId, TokenStatus.DONE);
-                    session.setTotalServed(totalServed);
+                    List<Token> doneTokens = tokenRepository
+                            .findTodaysTokensByBusiness(businessId)
+                            .stream()
+                            .filter(t -> t.getStatus() == TokenStatus.DONE
+                                    && t.getServedAt() != null
+                                    && t.getIssuedAt() != null)
+                            .collect(Collectors.toList());
+
+                    session.setTotalServed(doneTokens.size());
+
+                    if (!doneTokens.isEmpty()) {
+                        // Avg wait time in minutes
+                        double avgWait = doneTokens.stream()
+                                .mapToLong(t -> java.time.Duration
+                                        .between(t.getIssuedAt(),
+                                                t.getServedAt())
+                                        .toMinutes())
+                                .average()
+                                .orElse(0);
+                        session.setAvgWaitMins((int) avgWait);
+
+                        // Avg party size
+                        double avgParty = doneTokens.stream()
+                                .mapToInt(Token::getPartySize)
+                                .average()
+                                .orElse(1.0);
+                        session.setAvgPartySize(avgParty);
+
+                        // Revenue estimate: ₹200 per person served
+                        session.setRevenueEstimate(
+                                doneTokens.size() * avgParty * 200.0);
+
+                        // Peak hour: which hour had most served tokens
+                        Map<Integer, Long> hourCounts = doneTokens.stream()
+                                .collect(Collectors.groupingBy(
+                                        t -> t.getServedAt().getHour(),
+                                        Collectors.counting()));
+                        hourCounts.entrySet().stream()
+                                .max(Map.Entry.comparingByValue())
+                                .ifPresent(e ->
+                                        session.setPeakHour(e.getKey()));
+                    }
+
                     queueSessionRepository.save(session);
                 });
     }

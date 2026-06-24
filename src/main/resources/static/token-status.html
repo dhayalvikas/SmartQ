@@ -129,6 +129,20 @@
             font-weight: bold;
         }
 
+        .polling-indicator {
+            text-align: center;
+            color: #475569;
+            font-size: 0.75rem;
+            margin-top: 10px;
+        }
+
+        .polling-stopped {
+            color: #64748b;
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 10px;
+        }
+
         .footer {
             text-align: center;
             color: #475569;
@@ -157,10 +171,14 @@
 
 <div class="footer">SmartQ — Queue smarter, wait less</div>
 <div class="last-updated" id="lastUpdated"></div>
+<div id="pollingStatus" class="polling-indicator">🔄 Auto-refreshing every 5 seconds</div>
 
 <script>
     const params = new URLSearchParams(window.location.search);
     const tokenId = params.get('tokenId');
+
+    // FIX #6: Store interval reference so we can stop it
+    let pollInterval = null;
 
     if (!tokenId) {
         document.getElementById('card').innerHTML =
@@ -250,6 +268,20 @@
             document.getElementById('lastUpdated').textContent =
                 'Last updated: ' + new Date().toLocaleTimeString('en-IN');
 
+            // FIX #6: Stop polling when token reaches terminal state
+            // No point making server requests when status won't change
+            const terminalStatuses = ['DONE', 'NO_SHOW', 'LEFT'];
+            if (terminalStatuses.includes(data.status)) {
+                if (pollInterval) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
+                document.getElementById('pollingStatus').textContent =
+                    '✅ Status is final — auto-refresh stopped';
+                document.getElementById('pollingStatus').className =
+                    'polling-stopped';
+            }
+
         } catch (error) {
             console.error('Error:', error);
             document.getElementById('card').innerHTML =
@@ -272,8 +304,9 @@
         }
     }
 
+    // FIX #6: Poll every 5s (was 10s) and store interval reference
     loadStatus();
-    setInterval(loadStatus, 10000);
+    pollInterval = setInterval(loadStatus, 5000);
 </script>
 
 </body>

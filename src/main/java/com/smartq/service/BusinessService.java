@@ -6,6 +6,7 @@ import com.smartq.entity.Business;
 import com.smartq.entity.QueueSession;
 import com.smartq.entity.User;
 import com.smartq.repository.BusinessRepository;
+import com.smartq.repository.CounterRepository;
 import com.smartq.repository.QueueSessionRepository;
 import com.smartq.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class BusinessService {
     private final UserRepository userRepository;
     private final QueueSessionRepository queueSessionRepository;
     private final QrCodeService qrCodeService;
+    private final CounterRepository counterRepository;  // FIX #2
 
     @Value("${app.base.url:http://localhost:8080}")
     private String baseUrl;
@@ -67,7 +69,7 @@ public class BusinessService {
 
         businessRepository.save(business);
 
-        // Generate QR code for this business using production base URL
+        // Generate QR code using production base URL
         String qrContent = baseUrl + "/join.html?businessId="
                 + business.getId();
         String qrBase64 = qrCodeService
@@ -98,6 +100,14 @@ public class BusinessService {
         if (business.getIsQueueOpen()) {
             throw new RuntimeException("Queue is already open");
         }
+
+        // FIX #2: Reset counter daily stats when opening queue
+        // so "Served Today" and "Current Token" start fresh each day
+        counterRepository.findByBusinessId(businessId).forEach(c -> {
+            c.setTokensServedToday(0);
+            c.setCurrentToken(0);
+            counterRepository.save(c);
+        });
 
         business.setIsQueueOpen(true);
         businessRepository.save(business);
@@ -153,8 +163,7 @@ public class BusinessService {
         return mapToResponse(business);
     }
 
-    // Regenerate QR code (used for businesses created before URL fix,
-    // or seeded directly via SQL with no QR)
+    // Regenerate QR code
     public BusinessResponse regenerateQrCode(Long businessId) {
         User owner = getCurrentUser();
         Business business = businessRepository
@@ -162,8 +171,10 @@ public class BusinessService {
                 .orElseThrow(() ->
                         new RuntimeException("Business not found"));
 
-        String qrContent = baseUrl + "/join.html?businessId=" + business.getId();
-        String qrBase64 = qrCodeService.generateQrCodeBase64(qrContent);
+        String qrContent = baseUrl + "/join.html?businessId="
+                + business.getId();
+        String qrBase64 = qrCodeService
+                .generateQrCodeBase64(qrContent);
         business.setQrCodeUrl(qrBase64);
         businessRepository.save(business);
 

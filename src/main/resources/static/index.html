@@ -503,12 +503,12 @@
             <div class="demo-title">Owner Dashboard</div>
             <div class="demo-desc">Manage business, counters & analytics</div>
         </a>
-        <a href="/join.html?businessId=1" class="demo-link">
+        <a href="#" class="demo-link" id="demoJoinLink">
             <div class="demo-icon">📱</div>
             <div class="demo-title">Customer Join Page</div>
             <div class="demo-desc">Scan QR → join queue on phone</div>
         </a>
-        <a href="/tv-display.html?businessId=1" class="demo-link">
+        <a href="#" class="demo-link" id="demoTvLink">
             <div class="demo-icon">📺</div>
             <div class="demo-title">TV Display</div>
             <div class="demo-desc">Live token display for counters</div>
@@ -560,5 +560,46 @@
     <div class="footer-copy">© 2026 SmartQ — Queue smarter, wait less</div>
 </footer>
 
+<script>
+    // Dynamically set demo links using first available business
+    // Avoids hardcoded businessId=1 which may not exist in production
+    (async function setDemoLinks() {
+        try {
+            const res = await fetch('/api/display/1');
+            const data = await res.json();
+            // If business 1 exists, use it
+            if (data && data.businessId) {
+                setLinks(data.businessId);
+                return;
+            }
+        } catch (_) {}
+
+        // Try IDs 2-10 as fallback
+        for (let id = 2; id <= 10; id++) {
+            try {
+                const res = await fetch('/api/display/' + id);
+                if (res.ok) {
+                    setLinks(id);
+                    return;
+                }
+            } catch (_) {}
+        }
+
+        // No business found — link to owner dashboard to create one
+        document.getElementById('demoJoinLink').href = '/owner-dashboard.html';
+        document.getElementById('demoTvLink').href = '/owner-dashboard.html';
+        document.querySelector('#demoJoinLink .demo-desc').textContent =
+            'Login as owner to create a business first';
+        document.querySelector('#demoTvLink .demo-desc').textContent =
+            'Create a business to see TV display';
+    })();
+
+    function setLinks(businessId) {
+        document.getElementById('demoJoinLink').href =
+            '/join.html?businessId=' + businessId;
+        document.getElementById('demoTvLink').href =
+            '/tv-display.html?businessId=' + businessId;
+    }
+</script>
 </body>
 </html>

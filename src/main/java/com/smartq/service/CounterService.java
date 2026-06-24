@@ -5,8 +5,10 @@ import com.smartq.dto.response.CounterResponse;
 import com.smartq.entity.Business;
 import com.smartq.entity.Counter;
 import com.smartq.entity.User;
+import com.smartq.enums.TokenStatus;
 import com.smartq.repository.BusinessRepository;
 import com.smartq.repository.CounterRepository;
+import com.smartq.repository.TokenRepository;
 import com.smartq.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +24,7 @@ public class CounterService {
     private final CounterRepository counterRepository;
     private final BusinessRepository businessRepository;
     private final UserRepository userRepository;
+    private final TokenRepository tokenRepository; // FIX #5
 
     // Get current logged in user
     private User getCurrentUser() {
@@ -44,13 +47,17 @@ public class CounterService {
                                 "Business not found or unauthorized"));
 
         // Check for duplicate counter name in this business
-        boolean nameExists = counterRepository.findByBusinessId(request.getBusinessId())
+        boolean nameExists = counterRepository
+                .findByBusinessId(request.getBusinessId())
                 .stream()
-                .anyMatch(c -> c.getCounterName().equalsIgnoreCase(request.getCounterName()));
+                .anyMatch(c -> c.getCounterName()
+                        .equalsIgnoreCase(request.getCounterName()));
 
         if (nameExists) {
             throw new RuntimeException(
-                    "A counter named '" + request.getCounterName() + "' already exists");
+                    "A counter named '"
+                            + request.getCounterName()
+                            + "' already exists");
         }
 
         Counter counter = Counter.builder()
@@ -100,15 +107,34 @@ public class CounterService {
         return mapToResponse(counter);
     }
 
-    // Delete counter
+    // FIX #5: Block delete if counter has active tokens
+    // Prevents FK constraint crash in database
     public void deleteCounter(Long counterId) {
         User owner = getCurrentUser();
         Counter counter = counterRepository.findById(counterId)
-                .orElseThrow(() -> new RuntimeException("Counter not found"));
-        // Make sure owner owns this counter's business
-        if (!counter.getBusiness().getOwner().getId().equals(owner.getId())) {
+                .orElseThrow(() ->
+                        new RuntimeException("Counter not found"));
+
+        if (!counter.getBusiness().getOwner()
+                .getId().equals(owner.getId())) {
             throw new RuntimeException("Unauthorized");
         }
+
+        // Block deletion if active customers are in this counter
+        int activeTokens =
+                tokenRepository.countByCounterIdAndStatus(
+                        counterId, TokenStatus.WAITING)
+                        + tokenRepository.countByCounterIdAndStatus(
+                        counterId, TokenStatus.CALLED);
+
+        if (activeTokens > 0) {
+            throw new RuntimeException(
+                    "Cannot delete counter with "
+                            + activeTokens
+                            + " active customer(s) in queue. "
+                            + "Wait for queue to clear first.");
+        }
+
         counterRepository.delete(counter);
     }
 

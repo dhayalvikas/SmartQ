@@ -49,7 +49,7 @@ public class FeedbackService {
                     "Feedback can only be submitted for completed visits");
         }
 
-        // Prevent duplicate feedback
+        // Prevent duplicate feedback for same visit
         if (feedbackRepository.existsByTokenId(token.getId())) {
             throw new RuntimeException(
                     "Feedback already submitted for this visit");
@@ -70,23 +70,28 @@ public class FeedbackService {
 
         feedbackRepository.save(feedback);
 
-        // Update business average rating
+        // FIX #9: Null safety on avgRating
+        // findAvgRatingByBusiness returns null when no feedback exists
         Double avgRating = feedbackRepository
                 .findAvgRatingByBusiness(business.getId());
 
-        business.setAvgRating(
-                Math.round(avgRating * 100) / 100.0);
-        business.setTotalReviews(
-                business.getTotalReviews() + 1);
+        if (avgRating != null) {
+            business.setAvgRating(
+                    Math.round(avgRating * 100) / 100.0);
+        }
+        business.setTotalReviews(business.getTotalReviews() + 1);
         businessRepository.save(business);
 
         return mapToResponse(feedback);
     }
 
+    // FIX: Limit feedback to 50 most recent entries
+    // Prevents returning thousands of rows for busy businesses
     public List<FeedbackResponse> getBusinessFeedback(Long businessId) {
         return feedbackRepository
                 .findByBusinessIdOrderByCreatedAtDesc(businessId)
                 .stream()
+                .limit(50)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
