@@ -101,13 +101,20 @@ public class BusinessService {
             throw new RuntimeException("Queue is already open");
         }
 
-        // FIX #2: Reset counter daily stats when opening queue
-        // so "Served Today" and "Current Token" start fresh each day
-        counterRepository.findByBusinessId(businessId).forEach(c -> {
-            c.setTokensServedToday(0);
-            c.setCurrentToken(0);
-            counterRepository.save(c);
-        });
+        // FIX #2: Reset counter daily stats ONLY when opening for
+        // the first time today. If owner closes and reopens queue
+        // during the same day, stats are preserved.
+        boolean isNewDay = !queueSessionRepository
+                .findByBusinessIdAndDate(businessId, LocalDate.now())
+                .isPresent();
+
+        if (isNewDay) {
+            counterRepository.findByBusinessId(businessId).forEach(c -> {
+                c.setTokensServedToday(0);
+                c.setCurrentToken(0);
+                counterRepository.save(c);
+            });
+        }
 
         business.setIsQueueOpen(true);
         businessRepository.save(business);
