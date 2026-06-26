@@ -13,16 +13,22 @@
 
 ### Owner Dashboard
 ![Owner Dashboard](screenshots/02-owner-dashboard.png)
-![Analytics & Feedback](screenshots/03-owner-dashboard-analytics.png)
 ![Live Queue](screenshots/11-owner-dashboard-queue-live.png)
+![Analytics & Feedback](screenshots/03-owner-dashboard-analytics.png)
 
-### Customer Flow
-![Join Queue - Select Counter](screenshots/05-customer-join-counter-select.png)
-![Join Queue - Get Token](screenshots/06-customer-join-get-token.png)
-![Token Status - Waiting](screenshots/10-token-status-waiting.png)
-![Token Status - Your Turn](screenshots/12-token-status-called.png)
-![Token Status - Completed](screenshots/13-token-status-completed.png)
+### Customer Flow — Join Queue
+![Customer Login](screenshots/09-customer-login.png)
+![Select Counter](screenshots/05-customer-join-counter-select.png)
+![Get Token](screenshots/06-customer-join-get-token.png)
+
+### Customer Flow — Token Status
+![Waiting](screenshots/10-token-status-waiting.png)
+![Your Turn](screenshots/12-token-status-called.png)
+![Completed](screenshots/13-token-status-completed.png)
+
+### Feedback
 ![Feedback Page](screenshots/14-token-status-rate.png)
+![Feedback Form](screenshots/07-feedback-page.png)
 
 ### Admin Dashboard
 ![Admin Dashboard](screenshots/01-admin-dashboard.png)
